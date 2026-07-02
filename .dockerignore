@@ -1,0 +1,22 @@
+# Keep the build context small and never ship secrets or host binaries.
+# (node_modules is reinstalled in the deps stage; .env is injected at runtime.)
+node_modules
+.next
+.git
+.gitignore
+
+# Secrets — never copy into the image
+.env
+.env.*
+
+# Local dev database + build/test artifacts
+.pgdata
+coverage
+*.log
+
+# OS / editor
+.DS_Store
+
+# Docker's own files
+Dockerfile
+.dockerignore
