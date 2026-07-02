@@ -12,6 +12,7 @@
     "db:dev": "tsx scripts/dev-db.ts"
   },
   "dependencies": {
+    "@prisma/client": "^7.8.0",
     "next": "16.2.10",
     "react": "19.2.4",
     "react-dom": "19.2.4",
@@ -22,8 +23,11 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@vitest/coverage-v8": "^4.1.9",
+    "dotenv": "^17.4.2",
+    "embedded-postgres": "^18.4.0-beta.17",
     "eslint": "^9",
     "eslint-config-next": "16.2.10",
+    "prisma": "^7.8.0",
     "tsx": "^4.22.5",
     "typescript": "^5",
     "vitest": "^4.1.9"

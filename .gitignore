@@ -41,3 +41,6 @@ next-env.d.ts
 
 # Local dev database (embedded-postgres)
 .pgdata/
+
+# Prisma generated client
+/src/generated/prisma
