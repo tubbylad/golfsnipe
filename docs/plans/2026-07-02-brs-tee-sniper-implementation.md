@@ -79,25 +79,32 @@ Run: `npm test` → expect 1 passed.
 git add -A && git commit -m "chore: scaffold Next.js + TypeScript + Vitest"
 ```
 
-### Task 0.2: Local Postgres + Prisma
+### Task 0.2: Local Postgres (no Docker) + Prisma
 
-**Step 1:** `docker-compose.yml` (local dev DB):
-```yaml
-services:
-  db:
-    image: postgres:16
-    environment: { POSTGRES_USER: brs, POSTGRES_PASSWORD: brs, POSTGRES_DB: brs }
-    ports: ["5432:5432"]
-    volumes: [ "brs_pgdata:/var/lib/postgresql/data" ]
-volumes: { brs_pgdata: {} }
-```
-Run: `docker compose up -d db`.
+> **Env note (verified 2026-07-02):** this Mac has **no Docker and no Homebrew**. Use
+> **`embedded-postgres`** (npm) — it runs a real Postgres from a platform binary shipped
+> as an npm optional dep (no Docker, no Maven fetch) on a local port, giving a standard
+> `DATABASE_URL`. **Prod** uses a **Coolify-provisioned Postgres** — same `DATABASE_URL`
+> contract, nothing else changes.
 
-**Step 2:** Install Prisma: `npm i -D prisma && npm i @prisma/client && npx prisma init --datasource-provider postgresql`.
+**Step 1:** Install: `npm i -D embedded-postgres prisma tsx && npm i @prisma/client`.
 
-**Step 3:** Put `DATABASE_URL` in `.env`. Create `.env.example` (same keys, empty values). Confirm `.env` is gitignored (it is).
+**Step 2:** Add `scripts/dev-db.ts` that starts an embedded Postgres (data dir `.pgdata/`,
+port 5432, user/pass `brs`/`brs`, db `brs`) and keeps it running; npm script
+`"db:dev": "tsx scripts/dev-db.ts"`. Gitignore `.pgdata/`.
+- **If the embedded-postgres binary is unavailable in this environment, STOP and report** —
+  fallback is a Coolify-hosted dev Postgres (`DATABASE_URL` over SSL). Do not silently switch to SQLite.
 
-**Step 4:** Commit `docker-compose.yml`, `prisma/schema.prisma`, `.env.example`.
+**Step 3:** `npx prisma init --datasource-provider postgresql`. Put
+`DATABASE_URL=postgresql://brs:brs@localhost:5432/brs` in `.env`; create `.env.example`.
+Confirm `.env` is gitignored (it is).
+
+**Step 4:** For **tests**, add a Vitest global setup that starts embedded-postgres on an
+ephemeral port, runs `prisma migrate deploy`, exposes `DATABASE_URL`, tears down after.
+(Keeps DB-touching tests real, not mocked.)
+
+**Step 5:** Commit `scripts/dev-db.ts`, the test setup, `prisma/schema.prisma`,
+`.env.example`, updated `.gitignore`.
 
 ### Task 0.3: Zod-validated env module
 
