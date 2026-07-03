@@ -1,0 +1,134 @@
+.wrap {
+  min-height: 100dvh;
+  padding: 2rem;
+  display: flex;
+  justify-content: center;
+}
+
+.container {
+  width: 100%;
+  max-width: 44rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.subtitle {
+  margin: 0.25rem 0 0;
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.back {
+  font-size: 0.85rem;
+  color: #444;
+}
+
+.section {
+  border: 1px solid #e2e2e2;
+  border-radius: 12px;
+  padding: 1.25rem 1.5rem;
+}
+
+.sectionTitle {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0 0 0.75rem;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  max-width: 24rem;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 0.85rem;
+  color: #333;
+}
+
+.input,
+.select {
+  padding: 0.55rem 0.65rem;
+  border: 1px solid #cfcfcf;
+  border-radius: 8px;
+  font-size: 0.95rem;
+}
+
+.button {
+  align-self: flex-start;
+  margin-top: 0.25rem;
+  padding: 0.6rem 1rem;
+  border: none;
+  border-radius: 8px;
+  background: #111;
+  color: #fff;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.linkButton {
+  display: inline-block;
+  padding: 0.55rem 0.9rem;
+  border: 1px solid #111;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  color: #111;
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.accountRow {
+  border: 1px solid #ececec;
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+}
+
+.accountName {
+  font-weight: 600;
+}
+
+.empty {
+  color: #666;
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.muted {
+  color: #666;
+  font-size: 0.85rem;
+}
+
+.logout {
+  border: 1px solid #cfcfcf;
+  background: #fff;
+  border-radius: 8px;
+  padding: 0.4rem 0.8rem;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
