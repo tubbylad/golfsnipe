@@ -10,7 +10,9 @@ FROM node:24-alpine AS deps
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
 COPY package.json package-lock.json ./
-RUN npm ci
+# Skip postinstall (prisma generate) here — the schema isn't in this stage yet.
+# The client is generated in the builder stage once the source is present.
+RUN npm ci --ignore-scripts
 
 # ---- Builder -----------------------------------------------------------------
 FROM node:24-alpine AS builder
@@ -19,11 +21,14 @@ ENV NEXT_TELEMETRY_DISABLED=1
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 # Produces .next/standalone thanks to `output: 'standalone'` in next.config.ts.
-# NOTE (Phase 1): once prisma/schema.prisma has models, add a `npx prisma generate`
-# step here (and `prisma migrate deploy` to the Coolify release command).
+# The Prisma client is gitignored, so generate it here (needs the schema, now copied).
+# A dummy DATABASE_URL lets `next build` evaluate modules that construct the Prisma
+# client; Coolify injects the real DATABASE_URL at runtime (runtime env wins).
 # Strip any stray .env from the standalone bundle so a secret (e.g. BRS_VAULT_KEY)
 # can never ride into the image even if .dockerignore is later weakened.
-RUN npm run build && rm -f .next/standalone/.env*
+ENV DATABASE_URL="postgresql://build:build@localhost:5432/build"
+RUN npx prisma generate && npm run build && rm -f .next/standalone/.env*
+# DB migrations run separately (Coolify release / one-off), not in this minimal runner.
 
 # ---- Runner ------------------------------------------------------------------
 FROM node:24-alpine AS runner
