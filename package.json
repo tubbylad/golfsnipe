@@ -12,6 +12,7 @@
     "db:dev": "tsx scripts/dev-db.ts"
   },
   "dependencies": {
+    "@prisma/adapter-pg": "^7.8.0",
     "@prisma/client": "^7.8.0",
     "next": "16.2.10",
     "react": "19.2.4",

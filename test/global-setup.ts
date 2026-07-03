@@ -34,6 +34,10 @@ export default async function setup(project: TestProject) {
   const password = 'brs';
   const database = 'brs';
 
+  // Capture Postgres stderr instead of swallowing it, so a startup failure is
+  // not silent. Ignored on the happy path; printed if startup throws.
+  const pgErrors: string[] = [];
+
   const pg = new EmbeddedPostgres({
     databaseDir: dataDir,
     port,
@@ -42,28 +46,43 @@ export default async function setup(project: TestProject) {
     authMethod: 'password',
     persistent: false, // ephemeral: stop() wipes the cluster
     onLog: () => {},
-    onError: () => {},
+    onError: (messageOrError) => {
+      pgErrors.push(String(messageOrError));
+    },
   });
 
-  await pg.initialise();
-  await pg.start();
-  await pg.createDatabase(database);
-
   const databaseUrl = `postgresql://${user}:${password}@localhost:${port}/${database}`;
-  process.env.DATABASE_URL = databaseUrl;
-  project.provide('DATABASE_URL', databaseUrl);
 
-  // Apply migrations. No-op today (zero migrations); exercised from Task 1.1.
   try {
-    execFileSync(path.resolve('node_modules/.bin/prisma'), ['migrate', 'deploy'], {
-      env: { ...process.env, DATABASE_URL: databaseUrl },
-      stdio: 'pipe',
-    });
+    await pg.initialise();
+    await pg.start();
+    await pg.createDatabase(database);
+
+    process.env.DATABASE_URL = databaseUrl;
+    project.provide('DATABASE_URL', databaseUrl);
+
+    // Apply migrations. Exercised from Task 1.1 onward.
+    try {
+      execFileSync(path.resolve('node_modules/.bin/prisma'), ['migrate', 'deploy'], {
+        env: { ...process.env, DATABASE_URL: databaseUrl },
+        stdio: 'pipe',
+      });
+    } catch (err) {
+      const e = err as { stdout?: Buffer; stderr?: Buffer };
+      console.error(
+        '[test] prisma migrate deploy failed:\n' + String(e.stdout ?? '') + String(e.stderr ?? ''),
+      );
+      throw err;
+    }
   } catch (err) {
-    const e = err as { stdout?: Buffer; stderr?: Buffer };
-    console.error(
-      '[test] prisma migrate deploy failed:\n' + String(e.stdout ?? '') + String(e.stderr ?? ''),
-    );
+    // Failure happens before the teardown closure is registered, so clean up
+    // the half-started cluster and temp dir here to avoid leaking either, and
+    // surface any captured Postgres errors alongside the thrown error.
+    if (pgErrors.length > 0) {
+      console.error('[test] postgres errors during startup:\n' + pgErrors.join('\n'));
+    }
+    await pg.stop().catch(() => {});
+    rmSync(dataDir, { recursive: true, force: true });
     throw err;
   }
 
