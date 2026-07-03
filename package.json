@@ -10,6 +10,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "db:dev": "tsx scripts/dev-db.ts",
+    "seed:admin": "tsx scripts/seed-admin.ts",
+    "invite": "tsx scripts/create-invite.ts",
     "postinstall": "prisma generate"
   },
   "dependencies": {
