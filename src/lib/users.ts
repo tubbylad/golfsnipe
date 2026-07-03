@@ -9,16 +9,23 @@ export interface CreateUserInput {
   isAdmin?: boolean;
 }
 
+/** Canonical email form: trimmed + lowercased, so casing/whitespace can't
+ * create distinct accounts for the same address. */
+function normalizeEmail(email: string): string {
+  return email.trim().toLowerCase();
+}
+
 /**
  * Create a user, hashing the password before it ever reaches the database.
  * The plaintext is discarded once hashed; only `passwordHash` is persisted.
- * Throws on a duplicate email (the `User.email` unique constraint).
+ * Email is normalized (trim + lowercase). Throws on a duplicate email (the
+ * `User.email` unique constraint).
  */
 export async function createUser(input: CreateUserInput): Promise<User> {
   const passwordHash = await hashPassword(input.password);
   return prisma.user.create({
     data: {
-      email: input.email,
+      email: normalizeEmail(input.email),
       name: input.name,
       passwordHash,
       isAdmin: input.isAdmin ?? false,
@@ -26,7 +33,7 @@ export async function createUser(input: CreateUserInput): Promise<User> {
   });
 }
 
-/** Look up a user by email (unique). Returns null if none exists. */
+/** Look up a user by email (unique, normalized). Returns null if none exists. */
 export async function findUserByEmail(email: string): Promise<User | null> {
-  return prisma.user.findUnique({ where: { email } });
+  return prisma.user.findUnique({ where: { email: normalizeEmail(email) } });
 }

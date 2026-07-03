@@ -53,3 +53,18 @@ test('findUserByEmail returns the user, or null when absent', async () => {
   expect(found?.id).toBe(created.id);
   expect(found?.email).toBe('find@example.com');
 });
+
+test('email is normalized (trim + lowercase) on create and lookup', async () => {
+  const created = await createUser({ email: '  Alice@EXAMPLE.com  ', name: 'Alice', password: 'pw' });
+  // Stored in canonical form.
+  expect(created.email).toBe('alice@example.com');
+
+  // Lookup normalizes too: different casing/whitespace finds the same account.
+  expect((await findUserByEmail('alice@example.com'))?.id).toBe(created.id);
+  expect((await findUserByEmail('  ALICE@Example.COM '))?.id).toBe(created.id);
+
+  // The same address in a different case is the same account -> duplicate.
+  await expect(
+    createUser({ email: 'ALICE@example.com', name: 'Dup', password: 'pw' }),
+  ).rejects.toThrow();
+});

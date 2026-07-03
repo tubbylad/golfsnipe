@@ -8,6 +8,16 @@ test('hashPassword returns an argon2 hash, never the plaintext', async () => {
   expect(h.startsWith('$argon2')).toBe(true);
 });
 
+test('hashPassword pins Argon2id at the OWASP floor (m=19456, t=2, p=1)', async () => {
+  // The encoded hash embeds the parameters used, e.g.
+  // $argon2id$v=19$m=19456,t=2,p=1$<salt>$<hash>
+  const h = await hashPassword('hunter2');
+  expect(h.startsWith('$argon2id$')).toBe(true);
+  expect(h).toContain('m=19456');
+  expect(h).toContain('t=2');
+  expect(h).toContain('p=1');
+});
+
 test('verifyPassword is true for the matching password', async () => {
   const h = await hashPassword('hunter2');
   expect(await verifyPassword(h, 'hunter2')).toBe(true);

@@ -26,7 +26,10 @@ model User {
 }
 
 model Session {
-  id        String   @id @default(cuid()) // opaque cookie value
+  // Opaque cookie value. The app ALWAYS supplies a 256-bit CSPRNG token
+  // (see createSession in src/lib/session.ts); @default(cuid()) is only a
+  // fallback and is intentionally never relied on for session security.
+  id        String   @id @default(cuid())
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   expiresAt DateTime

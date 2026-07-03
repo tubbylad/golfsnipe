@@ -1,3 +1,4 @@
+import { randomBytes } from 'node:crypto';
 import { prisma } from '@/lib/db';
 import type { User } from '@/generated/prisma/client';
 
@@ -12,12 +13,15 @@ const SESSION_TTL_SECONDS = SESSION_TTL_MS / 1000;
 // Pure data-layer functions, unit-tested against the real Postgres.
 
 /**
- * Create a session for `userId`, expiring ~30 days out. Returns the session id,
- * which doubles as the opaque cookie value (a cuid, unguessable).
+ * Create a session for `userId`, expiring ~30 days out. The session id doubles
+ * as the opaque cookie value, so it MUST be unguessable: we generate it from a
+ * CSPRNG (32 random bytes -> 256-bit base64url token) rather than relying on the
+ * schema's `@default(cuid())`, which is not cryptographically secure.
  */
 export async function createSession(userId: string): Promise<string> {
+  const id = randomBytes(32).toString('base64url'); // 256-bit opaque token
   const session = await prisma.session.create({
-    data: { userId, expiresAt: new Date(Date.now() + SESSION_TTL_MS) },
+    data: { id, userId, expiresAt: new Date(Date.now() + SESSION_TTL_MS) },
   });
   return session.id;
 }

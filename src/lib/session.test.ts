@@ -13,6 +13,22 @@ beforeEach(async () => {
 
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
 
+test('createSession id is a 256-bit CSPRNG token, not a cuid', async () => {
+  const user = await createUser({ email: 'tok@example.com', name: 'Tok', password: 'pw' });
+  const id = await createSession(user.id);
+
+  // 32 random bytes -> 43-char unpadded base64url string = 256 bits of entropy.
+  expect(id).toMatch(/^[A-Za-z0-9_-]{43}$/);
+  // A Prisma cuid v1 is ~25 chars of [0-9a-z] beginning with 'c'; a 43-char
+  // token can never match that shape, so this is a stable "not a cuid" check.
+  expect(id).not.toMatch(/^c[0-9a-z]{24}$/);
+
+  // Two sessions get distinct, unpredictable ids (sanity check on randomness).
+  const id2 = await createSession(user.id);
+  expect(id2).not.toBe(id);
+  expect(id2).toMatch(/^[A-Za-z0-9_-]{43}$/);
+});
+
 test('createSession stores a row for the user, expiring ~30 days out', async () => {
   const user = await createUser({ email: 'sess@example.com', name: 'U', password: 'pw' });
   const before = Date.now();
