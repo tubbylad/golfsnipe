@@ -21,7 +21,9 @@ COPY . .
 # Produces .next/standalone thanks to `output: 'standalone'` in next.config.ts.
 # NOTE (Phase 1): once prisma/schema.prisma has models, add a `npx prisma generate`
 # step here (and `prisma migrate deploy` to the Coolify release command).
-RUN npm run build
+# Strip any stray .env from the standalone bundle so a secret (e.g. BRS_VAULT_KEY)
+# can never ride into the image even if .dockerignore is later weakened.
+RUN npm run build && rm -f .next/standalone/.env*
 
 # ---- Runner ------------------------------------------------------------------
 FROM node:24-alpine AS runner
