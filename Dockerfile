@@ -12,7 +12,9 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 # Skip postinstall (prisma generate) here — the schema isn't in this stage yet.
 # The client is generated in the builder stage once the source is present.
-RUN npm ci --ignore-scripts
+# `npm install` (not `npm ci`): the Mac-generated lock omits Linux-only optional
+# deps (@emnapi/*, native wasm fallbacks), which `npm ci` rejects on Alpine/musl.
+RUN npm install --ignore-scripts --no-audit --no-fund
 
 # ---- Builder -----------------------------------------------------------------
 FROM node:24-alpine AS builder
