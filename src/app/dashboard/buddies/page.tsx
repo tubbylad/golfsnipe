@@ -4,7 +4,7 @@ import { getCurrentUser } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { listBrsAccounts } from '@/lib/brs-accounts';
 import { AddBuddyForm } from './add-buddy-form';
-import { addGuestAction } from './actions';
+import { addGuestAction, deleteBuddyAction } from './actions';
 import styles from '../dashboard.module.css';
 
 /** List this user's Players and offer add-buddy (roster lookup) + add-guest forms. */
@@ -48,6 +48,24 @@ export default async function BuddiesPage() {
                     <span className={styles.badge}>
                       {p.isGuest ? 'Guest' : p.brsGolferId ? `id ${p.brsGolferId}` : 'No id'}
                     </span>
+                    <form action={deleteBuddyAction} style={{ marginLeft: 'auto' }}>
+                      <input type="hidden" name="playerId" value={p.id} />
+                      <button
+                        type="submit"
+                        aria-label={`Remove ${p.displayName}`}
+                        style={{
+                          background: 'transparent',
+                          border: 'none',
+                          color: 'inherit',
+                          opacity: 0.7,
+                          cursor: 'pointer',
+                          font: 'inherit',
+                          textDecoration: 'underline',
+                        }}
+                      >
+                        Remove
+                      </button>
+                    </form>
                   </div>
                 </li>
               ))}

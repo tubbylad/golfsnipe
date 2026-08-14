@@ -1,6 +1,7 @@
 'use server';
 
 import { redirect } from 'next/navigation';
+import { revalidatePath } from 'next/cache';
 import { getCurrentUser } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { decryptSecret } from '@/lib/vault';
@@ -77,26 +78,28 @@ export async function addBuddyAction(_prev: BuddyState, formData: FormData): Pro
       error: `No members at ${account.clubSlug} matched "${name}". Try "First Last" or the surname.`,
     };
   }
-  if (matches.length > 1) {
-    return {
-      ambiguous: matches.map((m) => ({
-        golferId: String(m.golferId),
-        label: `${m.firstName} ${m.lastName}`.trim() || m.initials,
-      })),
-      name,
-      accountId: account.id,
-    };
-  }
+  // Always confirm before saving — even a single match — so a mistyped name never
+  // silently adds the wrong person.
+  return {
+    ambiguous: matches.map((m) => ({
+      golferId: String(m.golferId),
+      label: `${m.firstName} ${m.lastName}`.trim() || m.initials,
+    })),
+    name,
+    accountId: account.id,
+  };
+}
 
-  const only = matches[0];
-  await prisma.player.create({
-    data: {
-      userId: user.id,
-      displayName: `${only.firstName} ${only.lastName}`.trim() || name,
-      brsGolferId: String(only.golferId),
-      isGuest: false,
-    },
-  });
+/** Remove a buddy/guest the caller owns. Ownership is enforced in the where-clause. */
+export async function deleteBuddyAction(formData: FormData): Promise<void> {
+  const user = await getCurrentUser();
+  if (!user) redirect('/login');
+
+  const playerId = field(formData, 'playerId');
+  if (playerId) {
+    await prisma.player.deleteMany({ where: { id: playerId, userId: user.id } });
+  }
+  revalidatePath('/dashboard/buddies');
   redirect('/dashboard/buddies');
 }
 

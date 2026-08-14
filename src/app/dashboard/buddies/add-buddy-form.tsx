@@ -9,27 +9,24 @@ const initial: BuddyState = null;
 type AccountOption = { id: string; label: string };
 
 /**
- * Client add-buddy form. Submits a name to the server action, which either saves
- * the unique match (and redirects), reports an error, or returns several matches
- * to disambiguate. In that case we render a radio pick and resubmit with the
- * chosen golfer-id.
+ * Client add-buddy form. Submits a name; the action always returns the matching
+ * member(s) for confirmation (never saves straight away). The user confirms the
+ * right person, then we resubmit with the chosen golfer-id to save.
  */
 export function AddBuddyForm({ accounts }: { accounts: AccountOption[] }) {
   const [state, action, pending] = useActionState(addBuddyAction, initial);
   const [pickedGolferId, setPickedGolferId] = useState('');
 
-  const ambiguous = state && 'ambiguous' in state ? state : null;
+  const found = state && 'ambiguous' in state ? state : null;
+  const single = found?.ambiguous.length === 1 ? found.ambiguous[0].golferId : '';
+  const picked = pickedGolferId || single; // a lone match is pre-selected for a one-tap confirm
+  const pickedLabel = found?.ambiguous.find((m) => m.golferId === picked)?.label ?? '';
 
   return (
     <form action={action} className={styles.form}>
       <label className={styles.field}>
         Search using account
-        <select
-          className={styles.select}
-          name="accountId"
-          required
-          defaultValue={accounts[0]?.id}
-        >
+        <select className={styles.select} name="accountId" required defaultValue={accounts[0]?.id}>
           {accounts.map((a) => (
             <option key={a.id} value={a.id}>
               {a.label}
@@ -44,32 +41,32 @@ export function AddBuddyForm({ accounts }: { accounts: AccountOption[] }) {
           className={styles.input}
           name="name"
           placeholder="First Last"
-          defaultValue={ambiguous?.name ?? ''}
+          defaultValue={found?.name ?? ''}
           autoComplete="off"
           required
         />
       </label>
 
-      {ambiguous ? (
+      {found ? (
         <div className={styles.field}>
-          <span>More than one member matched. Pick the right one:</span>
-          {ambiguous.ambiguous.map((m) => (
+          <span>
+            {found.ambiguous.length === 1
+              ? 'Confirm this is the right person, then add:'
+              : 'More than one member matched. Pick the right one:'}
+          </span>
+          {found.ambiguous.map((m) => (
             <label key={m.golferId} className={styles.checkRow}>
               <input
                 type="radio"
                 name="golferId"
                 value={m.golferId}
-                checked={pickedGolferId === m.golferId}
+                checked={picked === m.golferId}
                 onChange={() => setPickedGolferId(m.golferId)}
               />
               {m.label}
             </label>
           ))}
-          <input
-            type="hidden"
-            name="displayName"
-            value={ambiguous.ambiguous.find((m) => m.golferId === pickedGolferId)?.label ?? ''}
-          />
+          <input type="hidden" name="displayName" value={pickedLabel} />
         </div>
       ) : null}
 
@@ -79,12 +76,14 @@ export function AddBuddyForm({ accounts }: { accounts: AccountOption[] }) {
         </p>
       ) : null}
 
-      <button
-        className={styles.button}
-        type="submit"
-        disabled={pending || (!!ambiguous && !pickedGolferId)}
-      >
-        {pending ? 'Searching...' : ambiguous ? 'Add selected buddy' : 'Find and add buddy'}
+      <button className={styles.button} type="submit" disabled={pending || (!!found && !picked)}>
+        {pending
+          ? 'Searching...'
+          : found
+            ? pickedLabel
+              ? `Add ${pickedLabel}`
+              : 'Add selected buddy'
+            : 'Find buddy'}
       </button>
     </form>
   );
