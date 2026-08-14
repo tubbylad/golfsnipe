@@ -13,6 +13,7 @@ import type { User } from '@/generated/prisma/client';
 export async function authenticate(email: string, password: string): Promise<User | null> {
   const user = await findUserByEmail(email);
   if (!user) return null;
+  if (!user.passwordHash) return null; // passwordless (SMS-code) account — no password login
   const ok = await verifyPassword(user.passwordHash, password);
   return ok ? user : null;
 }

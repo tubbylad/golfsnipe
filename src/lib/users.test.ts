@@ -23,11 +23,11 @@ test('createUser persists an argon2 hash, never the plaintext password', async (
   expect(row).not.toBeNull();
   expect(row!.passwordHash).not.toBe(plaintext);
   expect(row!.passwordHash).not.toContain(plaintext);
-  expect(row!.passwordHash.startsWith('$argon2')).toBe(true);
+  expect(row!.passwordHash!.startsWith('$argon2')).toBe(true);
 
   // The stored hash verifies against the original password (and only it).
-  expect(await verifyPassword(row!.passwordHash, plaintext)).toBe(true);
-  expect(await verifyPassword(row!.passwordHash, 'not-the-password')).toBe(false);
+  expect(await verifyPassword(row!.passwordHash!, plaintext)).toBe(true);
+  expect(await verifyPassword(row!.passwordHash!, 'not-the-password')).toBe(false);
 });
 
 test('createUser defaults isAdmin to false and can set it true', async () => {
