@@ -28,6 +28,8 @@ const DATE = process.env.PDATE || '2026/08/23'; // target date, YYYY/MM/DD
 const MIN_HOUR = Number(process.env.MIN_HOUR || '13'); // first bookable slot at/after this hour
 const BURST_MS = Number(process.env.BURST_MS || '250');
 const MAX_POLL_MS = Number(process.env.MAX_POLL_MS || String(6 * 60_000));
+const WAIT_TICK_MS = Number(process.env.WAIT_TICK_MS || '30000'); // keep-alive cadence pre-release
+const ARM_LEAD_MS = 10_000; // stop keep-alive and start burst-polling this long before release
 
 const stamp = () => new Date().toISOString();
 const log = (m: string) => console.log(`${stamp()} ${m}`);
@@ -60,16 +62,23 @@ function firstBookable(avail: unknown, minHour: number): { time: string; slot: S
   await s.login(account.username, password);
   log('logged in ✓');
 
-  // Wait for the release instant if the date isn't live yet.
+  // Wait for the release instant if the date isn't live yet. Keep the session warm
+  // with a light poll every WAIT_TICK_MS (never one long sleep — a stale session at
+  // release would blow the single shot), then arm the burst ARM_LEAD_MS before release.
   const release = await s.getReleaseInfo(account.courseId, DATE);
   if (release) {
     const releaseAt = Date.parse(release.time);
-    const waitMs = releaseAt - Date.now();
-    log(`release at ${release.time} (${Math.round(waitMs / 1000)}s away) — "${release.title}"`);
-    if (waitMs > 3000) {
-      await sleep(waitMs - 2000);
-      log('2s to release — arming burst poll');
+    log(`release at ${release.time} (${Math.round((releaseAt - Date.now()) / 1000)}s away) — "${release.title}"`);
+    while (releaseAt - Date.now() > ARM_LEAD_MS) {
+      await sleep(Math.min(WAIT_TICK_MS, releaseAt - Date.now() - ARM_LEAD_MS));
+      try {
+        await s.getAvailability(account.courseId, DATE); // keep-alive
+      } catch (e) {
+        log(`keep-alive error: ${(e as Error).message}`);
+      }
+      log(`waiting… ${Math.round((releaseAt - Date.now()) / 1000)}s to release`);
     }
+    log(`≤${ARM_LEAD_MS / 1000}s to release — arming burst poll`);
   } else {
     log('date is already live (no release rule) — polling immediately');
   }
