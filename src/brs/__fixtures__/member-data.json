@@ -1,0 +1,8 @@
+[
+  { "member_id": 1001, "first_name": "Alex", "last_name": "Sample", "initials": "" },
+  { "member_id": 1002, "first_name": "Sam", "last_name": "Example", "initials": "S" },
+  { "member_id": 1003, "first_name": "Jo", "last_name": "Placeholder", "initials": "" },
+  { "member_id": 1004, "first_name": "Chris", "last_name": "Fixture", "initials": "C" },
+  { "member_id": 1005, "first_name": "Pat", "last_name": "Testcase", "initials": "" },
+  { "member_id": 1006, "first_name": "Jamie", "last_name": "Sample", "initials": "J" }
+]

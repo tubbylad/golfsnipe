@@ -2,18 +2,26 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { getCurrentUser } from '@/lib/auth';
 import { listBrsAccounts } from '@/lib/brs-accounts';
+import { prisma } from '@/lib/db';
 import { logoutAction } from '../(auth)/actions';
+import { DAY_NAMES, formatTargetDate } from './_util';
 import styles from './dashboard.module.css';
 
-const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-
 export default async function DashboardPage() {
-  // The layout already guards this tree; re-read here for the user + to satisfy
-  // the type (and to fetch this user's accounts).
+  // The layout already guards this tree; re-read here for the user + to fetch
+  // this user's accounts, targets and recent runs.
   const user = await getCurrentUser();
   if (!user) redirect('/login');
 
-  const accounts = await listBrsAccounts(user.id);
+  const [accounts, runs] = await Promise.all([
+    listBrsAccounts(user.id),
+    prisma.weeklyRun.findMany({
+      where: { target: { brsAccount: { userId: user.id } } },
+      orderBy: [{ targetDate: 'desc' }, { createdAt: 'desc' }],
+      take: 10,
+      include: { target: { include: { brsAccount: true } } },
+    }),
+  ]);
 
   return (
     <main className={styles.wrap}>
@@ -30,10 +38,22 @@ export default async function DashboardPage() {
           </form>
         </div>
 
+        <div className={styles.nav}>
+          <Link className={styles.navLink} href="/dashboard/targets">
+            Targets
+          </Link>
+          <Link className={styles.navLink} href="/dashboard/buddies">
+            Buddies
+          </Link>
+          <Link className={styles.navLink} href="/dashboard/week">
+            Who is in
+          </Link>
+        </div>
+
         <section className={styles.section}>
           <h2 className={styles.sectionTitle}>BRS accounts</h2>
           {accounts.length === 0 ? (
-            <p className={styles.empty}>No BRS accounts yet — add one to start sniping.</p>
+            <p className={styles.empty}>No BRS accounts yet - add one to start sniping.</p>
           ) : (
             <ul className={styles.list}>
               {accounts.map((account) => (
@@ -66,6 +86,36 @@ export default async function DashboardPage() {
               + Add BRS account
             </Link>
           </p>
+        </section>
+
+        <section className={styles.section}>
+          <h2 className={styles.sectionTitle}>Recent runs</h2>
+          {runs.length === 0 ? (
+            <p className={styles.empty}>
+              No runs yet. Set who is in for a target to arm the next one.
+            </p>
+          ) : (
+            <ul className={styles.list}>
+              {runs.map((run) => (
+                <li key={run.id} className={styles.accountRow}>
+                  <div className={styles.row}>
+                    <div>
+                      <div className={styles.accountName}>
+                        {run.target.brsAccount.clubSlug}:{' '}
+                        {DAY_NAMES[run.target.dayOfWeek] ?? `Day ${run.target.dayOfWeek}`}{' '}
+                        {run.target.teeTime}
+                      </div>
+                      <div className={styles.muted}>
+                        {formatTargetDate(run.targetDate)}
+                        {run.bookingRef ? ` · ref ${run.bookingRef}` : ''}
+                      </div>
+                    </div>
+                    <span className={styles.badge}>{run.status}</span>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
         </section>
       </div>
     </main>

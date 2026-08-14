@@ -25,8 +25,10 @@ export const envSchema = z.object({
     .refine(isVaultKey, 'BRS_VAULT_KEY must be base64 that decodes to exactly 32 bytes'),
   APP_ORIGIN: z.string().min(1),
   RESEND_API_KEY: z.string().optional(),
+  RESEND_FROM: z.string().optional(),
   SMS_ENDPOINT: z.string().optional(),
   SMS_SENDER: z.string().optional(),
+  SMS_API_KEY: z.string().optional(),
 });
 
 export type Env = z.infer<typeof envSchema>;

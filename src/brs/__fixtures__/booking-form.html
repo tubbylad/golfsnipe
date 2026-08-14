@@ -1,0 +1,45 @@
+<!-- FIXTURE: modern-platform booking form, returned by GET of a slot url
+     /<club>/bookings/book/<token>/<course>/<YYYYMMDD>/<HHmm> (that GET locks the slot 3 min).
+     Captured 2026-08-14 (Monifieth Ashludie course 3). ANONYMIZED: fake _token + fake member options.
+     Notes: CSRF field is top-level name="_token" (NOT member_booking_form[_token]); there is NO
+     slot-lock form field (lock is session-held); player_1 is PRE-SELECTED to the booker's golfer-id;
+     Guest = -2. For parseBookingTokens() + the POST body-builder tests. -->
+<form name="member_booking_form" method="post" action="/monifieth/bookings/store/3/20260819/1419">
+  <input type="hidden" name="_token" value="FAKECSRF0000000000000000.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.bbbbbbbbbbbbbbbbbbbbbbbbbbb">
+  <select name="member_booking_form[holes]">
+    <option value="9">9</option>
+    <option value="18" selected>18</option>
+  </select>
+  <select name="member_booking_form[player_1]">
+    <option value="">Start typing to find</option>
+    <option value="1001" selected>Sample, Alex</option>
+  </select>
+  <input type="checkbox" name="member_booking_form[player_1_buggy]" value="1">
+  <select name="member_booking_form[player_2]">
+    <option value="">Start typing to find</option>
+    <option value="-2">Guest</option>
+    <option value="1001">Sample, Alex</option>
+    <option value="1002">Example, Sam</option>
+    <option value="1003">Placeholder, Jo</option>
+  </select>
+  <input type="checkbox" name="member_booking_form[player_2_buggy]" value="1">
+  <select name="member_booking_form[player_3]">
+    <option value="">Start typing to find</option>
+    <option value="-2">Guest</option>
+    <option value="1001">Sample, Alex</option>
+    <option value="1002">Example, Sam</option>
+    <option value="1003">Placeholder, Jo</option>
+  </select>
+  <input type="checkbox" name="member_booking_form[player_3_buggy]" value="1">
+  <select name="member_booking_form[player_4]">
+    <option value="">Start typing to find</option>
+    <option value="-2">Guest</option>
+    <option value="1001">Sample, Alex</option>
+    <option value="1002">Example, Sam</option>
+    <option value="1003">Placeholder, Jo</option>
+  </select>
+  <input type="checkbox" name="member_booking_form[player_4_buggy]" value="1">
+  <input type="hidden" name="member_booking_form[vendor-tx-code]" value="">
+  <input type="hidden" name="member_booking_form[payment-amount]" value="">
+  <button type="submit" name="member_booking_form[confirm_booking]"></button>
+</form>

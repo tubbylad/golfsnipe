@@ -1,0 +1,89 @@
+{
+  "_fixture_note": "ANONYMIZED. Real structure captured 2026-08-14 from GET /monifieth/tee-sheet/data/<course>/<YYYY/MM/DD> (modern platform). All member names are fake; slot tokens are fabricated. Covers every observed slot state for findSlot() tests. `times` is keyed by 'HH:mm'.",
+  "title": null,
+  "warnings": [],
+  "casualBookingRules": [],
+  "times": {
+    "05:36": { "sunrise": true },
+    "07:30": {
+      "tee_time": {
+        "reservation": "Alex Sample",
+        "reservation_type": "Member",
+        "reservation_colour": "#1896ff",
+        "booked": true,
+        "holes": 18,
+        "participants": [
+          { "name": "Alex Sample", "has_buggy": false, "is_buddy": false },
+          { "name": "Sam Example", "has_buggy": true, "is_buddy": true },
+          { "name": "Jo Placeholder", "has_buggy": false, "is_buddy": false },
+          { "name": null, "has_buggy": false, "is_buddy": false }
+        ],
+        "bookable": false,
+        "editable": false,
+        "reason": "View Only",
+        "detail": "Members may view but not book this tee time.",
+        "unavailable_label": "Unavailable",
+        "buggies_remaining": null,
+        "url": null
+      }
+    },
+    "12:07": {
+      "tee_time": {
+        "reservation": "Chris Fixture",
+        "reservation_type": "Member",
+        "reservation_colour": "#1896ff",
+        "booked": true,
+        "holes": 18,
+        "participants": [
+          { "name": "Chris Fixture", "has_buggy": false, "is_buddy": false },
+          { "name": null, "has_buggy": false, "is_buddy": false },
+          { "name": null, "has_buggy": false, "is_buddy": false },
+          { "name": null, "has_buggy": false, "is_buddy": false }
+        ],
+        "bookable": true,
+        "editable": false,
+        "reason": null,
+        "detail": null,
+        "unavailable_label": "Unavailable",
+        "buggies_remaining": 0,
+        "url": "/monifieth/bookings/book/RkFLRV9KT0lOX1RPS0VOX0FBQUFBQUFB%253D/3/20260815/1207"
+      }
+    },
+    "12:15": {
+      "tee_time": {
+        "reservation": null,
+        "reservation_type": null,
+        "reservation_colour": "#E6E6E6",
+        "booked": false,
+        "holes": null,
+        "participants": [],
+        "bookable": true,
+        "editable": false,
+        "reason": null,
+        "detail": null,
+        "unavailable_label": "Unavailable",
+        "buggies_remaining": 0,
+        "url": "/monifieth/bookings/book/RkFLRV9FTVBUWV9UT0tFTl9CQkJCQkJC%253D/3/20260815/1215"
+      }
+    },
+    "12:23": {
+      "tee_time": {
+        "reservation": null,
+        "reservation_type": null,
+        "reservation_colour": "#E6E6E6",
+        "booked": false,
+        "holes": null,
+        "participants": [],
+        "bookable": false,
+        "editable": false,
+        "reason": "View Only",
+        "detail": "Members may view but not book this tee time.",
+        "unavailable_label": "Unavailable",
+        "buggies_remaining": null,
+        "url": null
+      }
+    },
+    "20:44": { "sunset_alert": true },
+    "20:52": { "sunset": true }
+  }
+}

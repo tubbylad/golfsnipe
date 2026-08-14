@@ -1,0 +1,34 @@
+{
+  "_fixture_note": "ANONYMIZED. A date whose casual times are NOT yet live — top-level casualBookingRules carries the release moment; every slot is bookable:false. For parseReleaseTime() tests. Real shape captured 2026-08-14 (Monifieth Ashludie, 22 Aug before its 19:00 release).",
+  "title": null,
+  "warnings": [],
+  "casualBookingRules": [
+    {
+      "title": "Casual times will become live on 14 Aug 2026 at 19:00",
+      "time": "2026-08-14T19:00:00+01:00",
+      "diffInMinutes": 411.9,
+      "humanDiff": "6 hours from now",
+      "countdownDiff": "51 minutes and 56 seconds"
+    }
+  ],
+  "times": {
+    "05:36": { "sunrise": true },
+    "07:30": {
+      "tee_time": {
+        "reservation": null,
+        "reservation_type": null,
+        "reservation_colour": "#E6E6E6",
+        "booked": false,
+        "holes": null,
+        "participants": [],
+        "bookable": false,
+        "editable": false,
+        "reason": "View Only",
+        "detail": "Members may view but not book this tee time.",
+        "unavailable_label": "Unavailable",
+        "buggies_remaining": null,
+        "url": null
+      }
+    }
+  }
+}
