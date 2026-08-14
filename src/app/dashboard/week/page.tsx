@@ -89,7 +89,7 @@ export default async function WeekPage({
                     className={t.id === selected?.id ? styles.navLinkActive : styles.navLink}
                   >
                     {t.brsAccount.clubSlug}: {DAY_NAMES[t.dayOfWeek] ?? `Day ${t.dayOfWeek}`}{' '}
-                    {t.teeTime}
+                    {t.teeTimes.join(', ')}
                     {t.active ? '' : ' (paused)'}
                   </Link>
                 ))}
@@ -100,7 +100,7 @@ export default async function WeekPage({
               <section className={styles.section}>
                 <h2 className={styles.sectionTitle}>
                   {selected.brsAccount.clubSlug} ·{' '}
-                  {DAY_NAMES[selected.dayOfWeek] ?? `Day ${selected.dayOfWeek}`} {selected.teeTime}
+                  {DAY_NAMES[selected.dayOfWeek] ?? `Day ${selected.dayOfWeek}`} {selected.teeTimes.join(', ')}
                 </h2>
                 <p className={styles.hint}>Next run: {formatTargetDate(targetDate)}</p>
                 <WeekForm

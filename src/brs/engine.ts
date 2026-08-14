@@ -1,12 +1,15 @@
 import type { PlayerSeat } from './booking';
-import type { ReleaseInfo, Slot } from './parse';
+import { findSlot, type ReleaseInfo } from './parse';
 import type { BookResult, BookSlotOptions } from './session';
 
 export interface SnipeTarget {
   courseId: number;
   /** The specific date to snipe, `YYYY/MM/DD`. */
   date: string;
-  time: string;
+  /** Preferred tee times "HH:mm", in priority order. */
+  times: string[];
+  /** If all preferred times are gone, take the next bookable later slot. */
+  autoNext?: boolean;
   holes?: 9 | 18;
   partners?: PlayerSeat[];
   buggies?: boolean[];
@@ -16,7 +19,7 @@ export interface SnipeTarget {
 
 /** The slice of BrsSession the engine needs — lets tests inject a fake. */
 export interface SnipeSessionLike {
-  getSlot(courseId: number, date: string, time: string): Promise<Slot | null>;
+  getAvailability(courseId: number, date: string): Promise<unknown>;
   bookSlot(slotUrl: string, opts: BookSlotOptions): Promise<BookResult>;
 }
 
@@ -27,6 +30,8 @@ export interface SnipeClock {
 
 export interface SnipeResult {
   status: 'won' | 'lost' | 'error';
+  /** The tee time that was actually secured. */
+  time?: string;
   bookingRef?: string | null;
   attempts: number;
   reason?: string;
@@ -59,20 +64,15 @@ export interface ReleaseReader {
 }
 
 export interface SnipePlan {
-  /** The date to snipe, `YYYY/MM/DD`. */
   date: string;
-  /** Epoch-ms of the release, or null if already live (or unknown). */
   releaseAtMs: number | null;
   alreadyLive: boolean;
 }
 
-/**
- * Decide the next date to snipe for a recurring target (e.g. every Saturday) and read
- * its release time. `alreadyLive` = the date's casual times are already bookable.
- */
+/** Decide the next date to snipe for a recurring target and read its release time. */
 export async function planNextSnipe(
   session: ReleaseReader,
-  target: { courseId: number; dayOfWeek: number; time?: string },
+  target: { courseId: number; dayOfWeek: number },
   from: Date,
 ): Promise<SnipePlan> {
   const date = toDatePath(nextDateForDayOfWeek(target.dayOfWeek, from));
@@ -85,8 +85,43 @@ export async function planNextSnipe(
 }
 
 /**
- * Poll the target slot until it flips bookable, then pounce (openSlot lock → POST).
- * Deterministic under an injected clock. Returns won / lost / error.
+ * Bookable slots to attempt this poll, in the order to try them: the preferred times
+ * first (priority order), then — if autoNext — later bookable slots ascending.
+ */
+export function candidateSlots(
+  availability: unknown,
+  target: SnipeTarget,
+): { time: string; url: string }[] {
+  const avail = availability as Parameters<typeof findSlot>[0];
+  const out: { time: string; url: string }[] = [];
+  const seen = new Set<string>();
+
+  for (const t of target.times) {
+    const slot = findSlot(avail, t);
+    if (slot?.bookable && slot.url) {
+      out.push({ time: t, url: slot.url });
+      seen.add(t);
+    }
+  }
+
+  if (target.autoNext && target.times.length) {
+    const latestPreferred = target.times.reduce((a, b) => (a > b ? a : b));
+    const allTimes = Object.keys(
+      (availability as { times?: Record<string, unknown> }).times ?? {},
+    ).sort();
+    for (const t of allTimes) {
+      if (t > latestPreferred && !seen.has(t)) {
+        const slot = findSlot(avail, t);
+        if (slot?.bookable && slot.url) out.push({ time: t, url: slot.url });
+      }
+    }
+  }
+  return out;
+}
+
+/**
+ * Poll the sheet until a preferred slot flips bookable, then pounce — trying the priority
+ * list (and auto-next slots) in order, moving on if one is snatched. won / lost / error.
  */
 export async function snipe(
   session: SnipeSessionLike,
@@ -99,24 +134,24 @@ export async function snipe(
   let attempts = 0;
   for (;;) {
     if (clock.now() - releaseAtMs > maxWindow) {
-      return {
-        status: 'lost',
-        attempts,
-        reason: 'release window elapsed without a bookable slot',
-      };
+      return { status: 'lost', attempts, reason: 'release window elapsed without a bookable slot' };
     }
     attempts++;
-    const slot = await session.getSlot(target.courseId, target.date, target.time);
-    if (slot?.bookable && slot.url) {
+    const avail = await session.getAvailability(target.courseId, target.date);
+    for (const slot of candidateSlots(avail, target)) {
       const res = await session.bookSlot(slot.url, {
         holes: target.holes ?? 18,
         partners: target.partners,
         buggies: target.buggies,
         dryRun: target.dryRun,
       });
-      if (res.status === 'booked') return { status: 'won', bookingRef: res.bookingRef, attempts };
-      if (res.status === 'would-book') return { status: 'won', bookingRef: null, attempts };
-      return { status: 'error', attempts, reason: res.reason };
+      if (res.status === 'booked') {
+        return { status: 'won', time: slot.time, bookingRef: res.bookingRef, attempts };
+      }
+      if (res.status === 'would-book') {
+        return { status: 'won', time: slot.time, bookingRef: null, attempts };
+      }
+      // 'error' → that slot was snatched between poll and book; try the next candidate
     }
     await clock.sleep(pollDelayMs(releaseAtMs - clock.now()));
   }

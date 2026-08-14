@@ -71,7 +71,7 @@ export default async function DashboardPage() {
                       {account.targets.map((target) => (
                         <li key={target.id} className={styles.muted}>
                           {DAY_NAMES[target.dayOfWeek] ?? `Day ${target.dayOfWeek}`} at{' '}
-                          {target.teeTime} · {target.holes} holes · party of {target.size}
+                          {target.teeTimes.join(', ')} · {target.holes} holes · party of {target.size}
                           {target.active ? '' : ' (paused)'}
                         </li>
                       ))}
@@ -103,7 +103,7 @@ export default async function DashboardPage() {
                       <div className={styles.accountName}>
                         {run.target.brsAccount.clubSlug}:{' '}
                         {DAY_NAMES[run.target.dayOfWeek] ?? `Day ${run.target.dayOfWeek}`}{' '}
-                        {run.target.teeTime}
+                        {run.target.teeTimes.join(', ')}
                       </div>
                       <div className={styles.muted}>
                         {formatTargetDate(run.targetDate)}

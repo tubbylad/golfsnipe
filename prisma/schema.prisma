@@ -94,7 +94,8 @@ model Target {
   brsAccountId     String
   brsAccount       BrsAccount @relation(fields: [brsAccountId], references: [id], onDelete: Cascade)
   dayOfWeek        Int        @default(6) // 6 = Saturday
-  teeTime          String     @default("07:45")
+  teeTimes         String[] // preferred tee times "HH:mm", in priority order
+  autoNext         Boolean    @default(false) // if all picks are gone, take the next bookable later slot
   holes            Int        @default(18)
   size             Int        @default(4)
   active           Boolean    @default(true)

@@ -63,7 +63,7 @@ async function runOnce(): Promise<number> {
 
       const plan = await planNextSnipe(
         session,
-        { courseId: account.courseId, dayOfWeek: t.dayOfWeek, time: t.teeTime },
+        { courseId: account.courseId, dayOfWeek: t.dayOfWeek },
         new Date(),
       );
 
@@ -93,7 +93,8 @@ async function runOnce(): Promise<number> {
         {
           courseId: account.courseId,
           date: plan.date,
-          time: t.teeTime,
+          times: t.teeTimes,
+          autoNext: t.autoNext,
           holes: t.holes === 9 ? 9 : 18,
           partners: partnersFromPlayerSet(run.playerSet, t.size),
           dryRun: !LIVE,
@@ -116,14 +117,16 @@ async function runOnce(): Promise<number> {
           club: account.clubSlug,
           course: String(account.courseId),
           date: plan.date,
-          time: t.teeTime,
+          time: result.time ?? t.teeTimes[0] ?? '?',
           size: t.size,
           bookingRef: result.bookingRef,
           reason: LIVE ? result.reason : `${result.reason ?? ''} (dry-run rehearsal)`.trim(),
         },
         { email: account.user.email, phone: account.user.phone },
       );
-      console.log(`[worker] target ${t.id} ${plan.date} ${t.teeTime} → ${result.status}`);
+      console.log(
+        `[worker] target ${t.id} ${plan.date} ${result.time ?? t.teeTimes.join('/')} -> ${result.status}`,
+      );
     } catch (err) {
       console.error(`[worker] target ${t.id} failed:`, err instanceof Error ? err.message : err);
     } finally {

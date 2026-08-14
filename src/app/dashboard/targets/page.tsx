@@ -64,7 +64,7 @@ export default async function TargetsPage() {
                         <div>
                           <div className={styles.accountName}>
                             {DAY_NAMES[target.dayOfWeek] ?? `Day ${target.dayOfWeek}`} at{' '}
-                            {target.teeTime}
+                            {target.teeTimes.join(', ')}
                           </div>
                           <div className={styles.muted}>
                             {target.holes} holes · party of {target.size} · polls{' '}
