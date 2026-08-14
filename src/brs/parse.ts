@@ -8,6 +8,38 @@ export function parseLoginToken(html: string): string {
   return token;
 }
 
+/**
+ * Derive the account fields from a BRS URL the user can just paste (their tee-sheet
+ * or booking page). Host → platform, first path segment → club slug, and the numeric
+ * segment after `tee-sheet`/`book` → course. Returns null for a non-BRS or invalid URL.
+ */
+export function parseBrsUrl(
+  input: string,
+): { slug: string; platform: 'modern' | 'legacy'; courseId: number | null } | null {
+  let url: URL;
+  try {
+    url = new URL(input.trim());
+  } catch {
+    return null;
+  }
+  const host = url.hostname.toLowerCase();
+  let platform: 'modern' | 'legacy';
+  if (host === 'members.brsgolf.com') platform = 'modern';
+  else if (host === 'www.brsgolf.com' || host === 'brsgolf.com') platform = 'legacy';
+  else return null;
+
+  const parts = url.pathname.split('/').filter(Boolean);
+  if (parts.length === 0) return null;
+
+  const ts = parts.indexOf('tee-sheet');
+  const bk = parts.indexOf('book');
+  let courseId: number | null = null;
+  if (ts >= 0 && /^\d+$/.test(parts[ts + 1] ?? '')) courseId = Number(parts[ts + 1]);
+  else if (bk >= 0 && /^\d+$/.test(parts[bk + 2] ?? '')) courseId = Number(parts[bk + 2]);
+
+  return { slug: parts[0], platform, courseId };
+}
+
 export interface SlotParticipant {
   name: string | null;
   hasBuggy: boolean;

@@ -158,6 +158,29 @@ export class BrsSession {
     return parseReleaseTime(json as Parameters<typeof parseReleaseTime>[0]);
   }
 
+  /**
+   * Best-effort: probe candidate course ids on a date and return the first one that
+   * has a bookable slot (i.e. this member can actually book it). Null if none do.
+   * Used to auto-fill the course when the user pastes only a bare club URL.
+   */
+  async detectBookableCourse(
+    date: Date | string,
+    candidates: number[] = [1, 2, 3, 4],
+  ): Promise<number | null> {
+    for (const courseId of candidates) {
+      try {
+        const json = await this.getAvailability(courseId, date);
+        const times = (json as { times?: Record<string, unknown> }).times ?? {};
+        for (const time of Object.keys(times)) {
+          if (findSlot(json as Parameters<typeof findSlot>[0], time)?.bookable) return courseId;
+        }
+      } catch {
+        // course id not valid for this club (e.g. HTTP 500) — try the next
+      }
+    }
+    return null;
+  }
+
   /** The full club roster (fetch once, cache; matching happens locally). */
   async getRoster(): Promise<Member[]> {
     const res = await this.request(`/member/data?_=${Date.now()}`, { xhr: true });

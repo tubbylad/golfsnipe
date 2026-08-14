@@ -92,6 +92,36 @@ test('matchMembers returns [] when nobody matches', async () => {
   expect(matchMembers(parseRoster(roster()), 'Nobody Here')).toEqual([]);
 });
 
+test('parseBrsUrl pulls slug + platform + course from a modern tee-sheet URL', async () => {
+  const { parseBrsUrl } = await import('./parse');
+  expect(parseBrsUrl('https://members.brsgolf.com/monifieth/tee-sheet/3')).toEqual({
+    slug: 'monifieth',
+    platform: 'modern',
+    courseId: 3,
+  });
+});
+
+test('parseBrsUrl handles a bare club URL (no course), and legacy hosts', async () => {
+  const { parseBrsUrl } = await import('./parse');
+  expect(parseBrsUrl('https://members.brsgolf.com/monifieth')).toEqual({
+    slug: 'monifieth',
+    platform: 'modern',
+    courseId: null,
+  });
+  expect(parseBrsUrl('https://www.brsgolf.com/oldclub')).toEqual({
+    slug: 'oldclub',
+    platform: 'legacy',
+    courseId: null,
+  });
+});
+
+test('parseBrsUrl finds the course inside a booking URL, trims, and rejects non-BRS input', async () => {
+  const { parseBrsUrl } = await import('./parse');
+  expect(parseBrsUrl('  https://members.brsgolf.com/monifieth/bookings/book/TOK/3/20260822/0746 ')?.courseId).toBe(3);
+  expect(parseBrsUrl('https://google.com/x')).toBeNull();
+  expect(parseBrsUrl('not a url')).toBeNull();
+});
+
 test('parseBookingForm extracts action, CSRF token, and the pre-selected booker golfer-id', async () => {
   const { parseBookingForm } = await import('./parse');
   const form = parseBookingForm(fixture('booking-form.html'));
