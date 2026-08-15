@@ -21,7 +21,18 @@ function field(formData: FormData, name: string): string {
 
 const HHMM = /^([01]\d|2[0-3]):[0-5]\d$/;
 
-export type TeeSheetSlot = { time: string; status: 'open' | 'booked' | 'unavailable' };
+export type TeeSheetSlot = {
+  time: string;
+  /**
+   * open      = bookable right now (live);
+   * pending   = not open yet but WILL open for you at release (BRS "Not Live Yet");
+   * booked    = taken by someone;
+   * viewonly  = your account is restricted from booking it (BRS "View Only");
+   * unavailable = anything else.
+   * Only `open` and `pending` are pickable.
+   */
+  status: 'open' | 'pending' | 'booked' | 'viewonly' | 'unavailable';
+};
 /** Present only when the whole sheet has not opened yet — the instant it goes live. */
 export type SheetRelease = { time: string; title: string };
 export type TeeSheetResult =
@@ -49,9 +60,18 @@ export async function fetchTeeSheetAction(brsAccountId: string, isoDate: string)
     const rawTimes = (avail as { times?: Record<string, unknown> }).times ?? {};
     const slots: TeeSheetSlot[] = [];
     for (const [time, v] of Object.entries(rawTimes)) {
-      const tt = (v as { tee_time?: { bookable: boolean; booked: boolean } }).tee_time;
+      const tt = (v as { tee_time?: { bookable: boolean; booked: boolean; reason?: string | null } })
+        .tee_time;
       if (!tt) continue; // skip sunrise/sunset markers
-      slots.push({ time, status: tt.bookable ? 'open' : tt.booked ? 'booked' : 'unavailable' });
+      // BRS marks the restriction even before release: "View Only" = you can't book it,
+      // "Not Live Yet" = it will open for you. So a snipe should only offer open/pending.
+      let status: TeeSheetSlot['status'];
+      if (tt.bookable) status = 'open';
+      else if (tt.reason === 'View Only') status = 'viewonly';
+      else if (tt.reason === 'Not Live Yet') status = 'pending';
+      else if (tt.booked) status = 'booked';
+      else status = 'unavailable';
+      slots.push({ time, status });
     }
     return { ok: true, slots, release };
   } catch {

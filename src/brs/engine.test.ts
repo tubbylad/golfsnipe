@@ -124,6 +124,23 @@ test('autoNext takes the next bookable slot after the picks when all picks are g
   expect(res.time).toBe('10:26');
 });
 
+test('autoNext does not wander beyond the ~hour window', async () => {
+  const s = fakeSession(
+    [avail({ '08:22': { bookable: false }, '08:30': { bookable: false }, '11:02': { bookable: true } })],
+    () => booked('R3'),
+  );
+  const res = await snipe(
+    s,
+    { courseId: 3, date: '2026/08/23', times: ['08:22'], autoNext: true },
+    0,
+    fakeClock(0),
+    { maxWindowMs: 30_000 },
+  );
+  // 11:02 is >60 min past 08:22, so auto-next skips it rather than booking hours later.
+  expect(res.status).toBe('lost');
+  expect(s.books).toEqual([]);
+});
+
 test('without autoNext, an unavailable lone pick keeps waiting then loses', async () => {
   const s = fakeSession(
     [avail({ '10:18': { bookable: false }, '10:26': { bookable: true } })],

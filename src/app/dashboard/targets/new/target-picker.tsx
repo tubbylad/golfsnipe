@@ -15,7 +15,9 @@ type PlayerOption = { id: string; displayName: string; isGuest: boolean };
 
 const STATUS_LABEL: Record<TeeSheetSlot['status'], string> = {
   open: 'Open',
+  pending: 'Opens at release',
   booked: 'Booked',
+  viewonly: 'View only',
   unavailable: 'Unavailable',
 };
 
@@ -140,30 +142,30 @@ export function TargetPicker({
           <div className={p.ledgerWrap}>
             {release ? (
               <p className={p.releaseBanner}>
-                This sheet has not opened yet. It goes live <b>{formatRelease(release.time)}</b>. Pick
-                the times you want and the bot books the first available one the instant it opens.
+                This sheet opens <b>{formatRelease(release.time)}</b>. Pick the times you want and the
+                bot books the first available one the instant it opens. Greyed times are{' '}
+                <b>view only</b> - your account can&apos;t book those.
               </p>
             ) : (
               <p className={p.liveBanner}>
-                This sheet is already open, so these are live bookings. Only <b>Open</b> times can be
-                picked.
+                This sheet is already open. Only bookable times can be picked; greyed times are booked
+                or <b>view only</b>.
               </p>
             )}
             <div className={p.ledger}>
               {slots.map((s) => {
                 const idx = picked.indexOf(s.time);
                 const on = idx >= 0;
-                const pickable = !!release || s.status === 'open';
-                const statusClass = release
-                  ? ''
-                  : s.status === 'booked'
+                const pickable = s.status === 'open' || s.status === 'pending';
+                const statusClass =
+                  s.status === 'booked'
                     ? p.booked
-                    : s.status === 'unavailable'
+                    : s.status === 'viewonly' || s.status === 'unavailable'
                       ? p.unavail
                       : '';
                 const body = on ? (
                   <span className={p.body}>Your #{idx + 1} pick</span>
-                ) : release ? (
+                ) : pickable ? (
                   <span className={p.body} />
                 ) : (
                   <span className={p.body}>{STATUS_LABEL[s.status]}</span>
@@ -235,7 +237,7 @@ export function TargetPicker({
                 <div className={p.divide} style={{ margin: '2px 0 12px' }} />
                 <label className={d.checkRow}>
                   <input type="checkbox" name="autoNext" defaultChecked /> If all of those are gone,
-                  take the next open slot after your last pick
+                  take the next open slot within an hour of your last pick
                 </label>
 
                 <div className={p.divide} style={{ margin: '14px 0 0' }} />

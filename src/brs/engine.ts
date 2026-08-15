@@ -10,6 +10,8 @@ export interface SnipeTarget {
   times: string[];
   /** If all preferred times are gone, take the next bookable later slot. */
   autoNext?: boolean;
+  /** How far past the latest preferred time auto-next may walk (minutes). Default 60. */
+  autoNextWindowMin?: number;
   holes?: 9 | 18;
   partners?: PlayerSeat[];
   buggies?: boolean[];
@@ -36,6 +38,15 @@ export interface SnipeResult {
   attempts: number;
   reason?: string;
 }
+
+/** Default auto-next reach: only take a fallback within an hour of your last pick,
+ * so it never silently books a slot hours later. */
+export const AUTO_NEXT_WINDOW_MIN = 60;
+
+const hhmmToMin = (t: string): number => {
+  const [h, m] = t.split(':').map(Number);
+  return h * 60 + m;
+};
 
 /** Poll cadence by ms-until-release (positive = future): gentle far out, burst around the flip. */
 export function pollDelayMs(msUntilRelease: number): number {
@@ -109,11 +120,13 @@ export function candidateSlots(
 
   if (target.autoNext && target.times.length) {
     const latestPreferred = target.times.reduce((a, b) => (a > b ? a : b));
+    const cutoffMin = hhmmToMin(latestPreferred) + (target.autoNextWindowMin ?? AUTO_NEXT_WINDOW_MIN);
     const allTimes = Object.keys(
       (availability as { times?: Record<string, unknown> }).times ?? {},
     ).sort();
     for (const t of allTimes) {
-      if (t > latestPreferred && !seen.has(t)) {
+      // Only walk forward within the window - never jump hours past the picks.
+      if (t > latestPreferred && hhmmToMin(t) <= cutoffMin && !seen.has(t)) {
         const slot = findSlot(avail, t);
         if (slot?.bookable && slot.url) out.push({ time: t, url: slot.url });
       }
