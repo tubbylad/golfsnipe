@@ -7,6 +7,7 @@ import { prisma } from '@/lib/db';
 import { decryptSecret } from '@/lib/vault';
 import { BrsSession } from '@/brs/session';
 import { parseReleaseTime } from '@/brs/parse';
+import type { Prisma } from '@/generated/prisma/client';
 
 /**
  * Server Actions for tee-time Targets. Each re-reads the session and re-checks
@@ -60,7 +61,12 @@ export async function fetchTeeSheetAction(brsAccountId: string, isoDate: string)
   }
 }
 
-/** Create a recurring Target from the picker: the weekday comes from the chosen date. */
+/**
+ * Create a Target from the picker. The weekday comes from the chosen date. The
+ * group (buddies/guests) is snapshotted onto the target so it books every run
+ * with no separate weekly step. `repeat=once` books that single date then the
+ * worker retires it; otherwise it recurs weekly.
+ */
 export async function createTargetAction(formData: FormData): Promise<void> {
   const user = await getCurrentUser();
   if (!user) redirect('/login');
@@ -74,9 +80,10 @@ export async function createTargetAction(formData: FormData): Promise<void> {
   const autoNext = field(formData, 'autoNext') === 'on';
   const holes = Number(field(formData, 'holes')) === 9 ? 9 : 18;
   const size = Math.min(4, Math.max(1, Number(field(formData, 'size')) || 4));
-  const dayOfWeek = /^\d{4}-\d{2}-\d{2}$/.test(isoDate)
-    ? new Date(`${isoDate}T00:00:00Z`).getUTCDay()
-    : NaN;
+  const oneShot = field(formData, 'repeat') === 'once';
+  const validDate = /^\d{4}-\d{2}-\d{2}$/.test(isoDate);
+  const dayOfWeek = validDate ? new Date(`${isoDate}T00:00:00Z`).getUTCDay() : NaN;
+  const playerIds = formData.getAll('playerIds').filter((v): v is string => typeof v === 'string');
 
   if (!brsAccountId || Number.isNaN(dayOfWeek) || teeTimes.length === 0) {
     redirect('/dashboard/targets/new');
@@ -88,8 +95,29 @@ export async function createTargetAction(formData: FormData): Promise<void> {
   });
   if (!account) redirect('/dashboard/targets/new');
 
+  // Snapshot the chosen buddies/guests as the snipe's default group (seats − the booker).
+  const players = playerIds.length
+    ? await prisma.player.findMany({ where: { id: { in: playerIds }, userId: user.id } })
+    : [];
+  const playerSet = players.slice(0, Math.max(0, size - 1)).map((p) => ({
+    playerId: p.id,
+    displayName: p.displayName,
+    brsGolferId: p.brsGolferId,
+    isGuest: p.isGuest,
+  })) as unknown as Prisma.InputJsonValue;
+
   await prisma.target.create({
-    data: { brsAccountId: account.id, dayOfWeek, teeTimes, autoNext, holes, size },
+    data: {
+      brsAccountId: account.id,
+      dayOfWeek,
+      teeTimes,
+      autoNext,
+      holes,
+      size,
+      playerSet,
+      oneShot,
+      oneShotDate: oneShot && validDate ? new Date(`${isoDate}T00:00:00Z`) : null,
+    },
   });
   redirect('/dashboard');
 }
@@ -111,4 +139,24 @@ export async function toggleTargetActiveAction(formData: FormData): Promise<void
   await prisma.target.update({ where: { id: target.id }, data: { active: !target.active } });
   revalidatePath('/dashboard/targets');
   revalidatePath('/dashboard');
+}
+
+/** Cancel (delete) a snipe the caller owns, along with its runs. Ownership-checked. */
+export async function deleteTargetAction(formData: FormData): Promise<void> {
+  const user = await getCurrentUser();
+  if (!user) redirect('/login');
+
+  const targetId = field(formData, 'targetId');
+  const target = targetId
+    ? await prisma.target.findFirst({
+        where: { id: targetId, brsAccount: { userId: user.id } },
+        select: { id: true },
+      })
+    : null;
+  if (target) {
+    await prisma.weeklyRun.deleteMany({ where: { targetId: target.id } });
+    await prisma.target.delete({ where: { id: target.id } });
+  }
+  revalidatePath('/dashboard');
+  redirect('/dashboard');
 }

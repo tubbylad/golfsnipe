@@ -5,7 +5,6 @@ export const NAV_ITEMS = [
   { href: '/dashboard/targets/new', label: 'New snipe', short: 'New', icon: 'plus', exact: false },
   { href: '/dashboard/clubs', label: 'Clubs', short: 'Clubs', icon: 'pin', exact: false },
   { href: '/dashboard/buddies', label: 'Buddies', short: 'Buddies', icon: 'people', exact: false },
-  { href: '/dashboard/week', label: 'This week', short: 'Week', icon: 'week', exact: false },
 ] as const;
 
 export type NavIcon = (typeof NAV_ITEMS)[number]['icon'];

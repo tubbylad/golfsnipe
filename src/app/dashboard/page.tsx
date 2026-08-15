@@ -3,7 +3,8 @@ import { redirect } from 'next/navigation';
 import { getCurrentUser } from '@/lib/auth';
 import { listBrsAccounts } from '@/lib/brs-accounts';
 import { prisma } from '@/lib/db';
-import { DAY_NAMES, formatTargetDate, upcomingTargetDate } from './_util';
+import { DAY_NAMES, formatTargetDate, readPlayerSet, upcomingTargetDate } from './_util';
+import { SnipeControls } from './snipe-controls';
 import styles from './dashboard.module.css';
 
 const MS_PER_DAY = 86_400_000;
@@ -19,10 +20,19 @@ function daysUntil(date: Date): string {
   const now = new Date();
   const start = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
   const then = Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate());
-  const d = Math.round((then - start) / MS_PER_DAY);
-  if (d <= 0) return 'Today';
-  if (d === 1) return 'Tomorrow';
-  return `In ${d} days`;
+  const dd = Math.round((then - start) / MS_PER_DAY);
+  if (dd <= 0) return 'Today';
+  if (dd === 1) return 'Tomorrow';
+  return `In ${dd} days`;
+}
+
+/** "You, Dylan Thomas · 1 open" — the group booked into this snipe. */
+function rosterText(playerSet: unknown, size: number): string {
+  const names = readPlayerSet(playerSet).map((r) => r.displayName);
+  const open = Math.max(0, size - 1 - names.length);
+  let text = ['You', ...names].join(', ');
+  if (open > 0) text += ` · ${open} open`;
+  return text;
 }
 
 export default async function DashboardPage() {
@@ -41,8 +51,17 @@ export default async function DashboardPage() {
 
   const snipes = accounts
     .flatMap((account) => account.targets.map((target) => ({ account, target })))
-    .map((s) => ({ ...s, next: upcomingTargetDate(s.target.dayOfWeek) }))
-    .sort((a, b) => Number(b.target.active) - Number(a.target.active) || a.next.getTime() - b.next.getTime());
+    .map((s) => ({
+      ...s,
+      next:
+        s.target.oneShot && s.target.oneShotDate
+          ? new Date(s.target.oneShotDate)
+          : upcomingTargetDate(s.target.dayOfWeek),
+    }))
+    .sort(
+      (a, b) =>
+        Number(b.target.active) - Number(a.target.active) || a.next.getTime() - b.next.getTime(),
+    );
 
   const nextUp = snipes.find((s) => s.target.active);
 
@@ -94,8 +113,10 @@ export default async function DashboardPage() {
                     <small>course {nextUp.account.courseId}</small>
                   </h2>
                   <div className={styles.sched}>
-                    <span className={`${styles.tag} ${styles.tagGo}`}>
-                      Every {DAY_NAMES[nextUp.target.dayOfWeek]}
+                    <span
+                      className={`${styles.tag} ${nextUp.target.oneShot ? styles.tagOnce : styles.tagGo}`}
+                    >
+                      {nextUp.target.oneShot ? 'Once' : `Every ${DAY_NAMES[nextUp.target.dayOfWeek]}`}
                     </span>
                     {nextUp.target.teeTimes.map((t, i) => (
                       <span key={t} className={styles.tt}>
@@ -105,9 +126,7 @@ export default async function DashboardPage() {
                     {nextUp.target.autoNext ? <span className={styles.then}>then next open</span> : null}
                   </div>
                   <div className={styles.seats}>
-                    <span className={styles.badge}>
-                      {nextUp.target.holes} holes · party of {nextUp.target.size}
-                    </span>
+                    <span className={styles.badge}>{rosterText(nextUp.target.playerSet, nextUp.target.size)}</span>
                     <span className={styles.state}>
                       <span className={styles.sq} />
                       Armed
@@ -130,30 +149,34 @@ export default async function DashboardPage() {
               {snipes.map(({ account, target, next }) => (
                 <div
                   key={target.id}
-                  className={`${styles.qRow} ${target.active ? styles.qArmed : styles.qPaused}`}
+                  className={`${styles.snipeRow} ${target.active ? styles.qArmed : styles.qPaused}`}
                 >
-                  <div className={styles.clubCell}>
-                    {titleCase(account.clubSlug)}
-                    <small>course {account.courseId}</small>
-                  </div>
-                  <div className={styles.whenline}>
-                    <span className={`${styles.tag} ${styles.tagGo}`}>
-                      Every {DAY_NAMES[target.dayOfWeek]}
-                    </span>
-                    {target.teeTimes.map((t) => (
-                      <span key={t} className={styles.tt}>
-                        {t}
+                  <div className={styles.snipeMain}>
+                    <div className={styles.clubCell}>
+                      {titleCase(account.clubSlug)}
+                      <small>course {account.courseId}</small>
+                    </div>
+                    <div className={styles.snipeMeta}>
+                      <span className={`${styles.tag} ${target.oneShot ? styles.tagOnce : styles.tagGo}`}>
+                        {target.oneShot ? 'Once' : `Every ${DAY_NAMES[target.dayOfWeek]}`}
                       </span>
-                    ))}
+                      {target.teeTimes.map((t) => (
+                        <span key={t} className={styles.tt}>
+                          {t}
+                        </span>
+                      ))}
+                      <span className={styles.metaDate}>{formatTargetDate(next)}</span>
+                      <span className={styles.metaRoster}>{rosterText(target.playerSet, target.size)}</span>
+                    </div>
                   </div>
-                  <div className={styles.qDate}>{formatTargetDate(next)}</div>
-                  <span
-                    className={`${styles.qState} ${
-                      target.active ? styles.qStateArmed : styles.qStatePaused
-                    }`}
-                  >
-                    {target.active ? 'Armed' : 'Paused'}
-                  </span>
+                  <div className={styles.snipeRight}>
+                    <span
+                      className={`${styles.qState} ${target.active ? styles.qStateArmed : styles.qStatePaused}`}
+                    >
+                      {target.active ? 'Armed' : 'Paused'}
+                    </span>
+                    <SnipeControls targetId={target.id} active={target.active} />
+                  </div>
                 </div>
               ))}
             </div>

@@ -15,12 +15,6 @@ const ICONS: Record<NavIcon, React.ReactNode> = {
       <circle cx="17.5" cy="9.5" r="2.2" />
     </>
   ),
-  week: (
-    <>
-      <rect x="4" y="5.5" width="16" height="15" rx="1.5" />
-      <path d="M4 10 H20 M8.5 3.5 V7 M15.5 3.5 V7" />
-    </>
-  ),
   pin: (
     <>
       <path d="M12 21 s6.5-5.8 6.5-10.5 a6.5 6.5 0 0 0-13 0 C5.5 15.2 12 21 12 21 z" />

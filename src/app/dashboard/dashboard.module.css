@@ -674,6 +674,73 @@
   border: 1px solid var(--rule-2);
 }
 
+/* snipe rows (Home): club + schedule/times/roster, with pause/cancel controls */
+.snipeRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 13px 16px;
+  border-bottom: 1px solid var(--rule);
+  box-shadow: inset 3px 0 0 transparent;
+  flex-wrap: wrap;
+}
+
+.snipeRow:last-child {
+  border-bottom: none;
+}
+
+.snipeMain {
+  min-width: 0;
+  flex: 1;
+}
+
+.snipeMeta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 5px;
+  font-size: 0.84rem;
+  color: var(--muted);
+}
+
+.metaDate {
+  font-family: var(--type);
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.metaRoster {
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+.snipeRight {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.snipeControls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.miniBtn {
+  font-family: var(--sans);
+  font-size: 0.66rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 600;
+  border: 1px solid var(--rule-ink);
+  background: var(--surface);
+  color: var(--ink);
+  padding: 6px 11px;
+  cursor: pointer;
+}
+
 /* ================= runs ================= */
 .run {
   display: grid;

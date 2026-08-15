@@ -69,13 +69,16 @@ export interface SnipePlan {
   alreadyLive: boolean;
 }
 
-/** Decide the next date to snipe for a recurring target and read its release time. */
+/**
+ * Decide the date to snipe and read its release time. Recurring targets use the
+ * next matching day-of-week; a one-off passes an explicit `date` (YYYY/MM/DD).
+ */
 export async function planNextSnipe(
   session: ReleaseReader,
-  target: { courseId: number; dayOfWeek: number },
+  target: { courseId: number; dayOfWeek: number; date?: string },
   from: Date,
 ): Promise<SnipePlan> {
-  const date = toDatePath(nextDateForDayOfWeek(target.dayOfWeek, from));
+  const date = target.date ?? toDatePath(nextDateForDayOfWeek(target.dayOfWeek, from));
   const release = await session.getReleaseInfo(target.courseId, date);
   return {
     date,

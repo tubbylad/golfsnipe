@@ -99,6 +99,12 @@ model Target {
   holes            Int        @default(18)
   size             Int        @default(4)
   active           Boolean    @default(true)
+  // The default group booked every run (snapshot of buddies/guests). Set at
+  // snipe creation, so no separate weekly "who's in" step is needed.
+  playerSet        Json?
+  // One-off vs recurring. oneShot books a single specific date then deactivates.
+  oneShot          Boolean    @default(false)
+  oneShotDate      DateTime?
   learnedReleaseAt String?
   pollWindowStart  String     @default("18:00")
   pollWindowEnd    String     @default("21:00")

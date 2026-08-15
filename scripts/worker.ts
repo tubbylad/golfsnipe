@@ -12,7 +12,7 @@
 import 'dotenv/config';
 import { prisma } from '@/lib/db';
 import { decryptSecret } from '@/lib/vault';
-import { BrsSession } from '@/brs/session';
+import { BrsSession, toDatePath } from '@/brs/session';
 import { planNextSnipe, snipe } from '@/brs/engine';
 import { notifyRun } from '@/lib/notifications';
 import type { PlayerSeat } from '@/brs/booking';
@@ -61,9 +61,21 @@ async function runOnce(): Promise<number> {
       session = new BrsSession({ clubSlug: account.clubSlug });
       await session.login(account.username, password);
 
+      // One-off snipes target a specific date and retire once it is past.
+      if (t.oneShot) {
+        const todayUtc = new Date();
+        todayUtc.setUTCHours(0, 0, 0, 0);
+        if (!t.oneShotDate || t.oneShotDate.getTime() < todayUtc.getTime()) {
+          await prisma.target.update({ where: { id: t.id }, data: { active: false } });
+          continue;
+        }
+      }
+
       const plan = await planNextSnipe(
         session,
-        { courseId: account.courseId, dayOfWeek: t.dayOfWeek },
+        t.oneShot && t.oneShotDate
+          ? { courseId: account.courseId, dayOfWeek: t.dayOfWeek, date: toDatePath(t.oneShotDate) }
+          : { courseId: account.courseId, dayOfWeek: t.dayOfWeek },
         new Date(),
       );
 
@@ -96,7 +108,7 @@ async function runOnce(): Promise<number> {
           times: t.teeTimes,
           autoNext: t.autoNext,
           holes: t.holes === 9 ? 9 : 18,
-          partners: partnersFromPlayerSet(run.playerSet, t.size),
+          partners: partnersFromPlayerSet(t.playerSet ?? run.playerSet, t.size),
           dryRun: !LIVE,
         },
         plan.releaseAtMs ?? Date.now(),
@@ -111,6 +123,10 @@ async function runOnce(): Promise<number> {
           timeline: { attempts: result.attempts, reason: result.reason ?? null, dryRun: !LIVE },
         },
       });
+      // A one-off has now had its single attempt — retire it.
+      if (t.oneShot) {
+        await prisma.target.update({ where: { id: t.id }, data: { active: false } });
+      }
       await notifyRun(
         {
           status: result.status,

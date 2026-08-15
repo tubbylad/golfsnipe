@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { getCurrentUser } from '@/lib/auth';
 import { listBrsAccounts } from '@/lib/brs-accounts';
+import { prisma } from '@/lib/db';
 import { TargetPicker } from './target-picker';
 import styles from '../../dashboard.module.css';
 
@@ -10,7 +11,10 @@ export default async function NewTargetPage() {
   const user = await getCurrentUser();
   if (!user) redirect('/login');
 
-  const accounts = await listBrsAccounts(user.id);
+  const [accounts, players] = await Promise.all([
+    listBrsAccounts(user.id),
+    prisma.player.findMany({ where: { userId: user.id }, orderBy: { createdAt: 'asc' } }),
+  ]);
 
   return (
     <main className={styles.wrap}>
@@ -40,6 +44,11 @@ export default async function NewTargetPage() {
         ) : (
           <TargetPicker
             accounts={accounts.map((a) => ({ id: a.id, clubSlug: a.clubSlug, username: a.username }))}
+            players={players.map((p) => ({
+              id: p.id,
+              displayName: p.displayName,
+              isGuest: p.isGuest,
+            }))}
           />
         )}
       </div>
