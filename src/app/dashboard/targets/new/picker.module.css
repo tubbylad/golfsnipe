@@ -1,0 +1,199 @@
+/* BRS-style tee-sheet ledger for picking + queueing a snipe. Square, ruled rows;
+ * time on the left (typewriter), a status/pick action on the right, a coloured
+ * left bar by state. Reuses shared controls from dashboard.module.css. */
+.top {
+  display: flex;
+  gap: 14px;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  border: 1px solid var(--rule-2);
+  background: var(--surface);
+}
+
+.ledgerWrap {
+  border-right: 1px solid var(--rule-2);
+  min-width: 0;
+}
+
+.ledger {
+  max-height: 440px;
+  overflow-y: auto;
+}
+
+.trow {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 64px 1fr auto;
+  gap: 10px;
+  align-items: center;
+  text-align: left;
+  padding: 0 14px;
+  min-height: 47px;
+  border: none;
+  border-bottom: 1px solid var(--rule);
+  background: var(--surface);
+  box-shadow: inset 3px 0 0 transparent;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+}
+
+.trow:nth-child(odd) {
+  background: var(--surface-alt);
+}
+
+.trow:hover:not(.sel) {
+  background: var(--go-soft);
+}
+
+.t {
+  font-family: var(--type);
+  font-size: 0.94rem;
+}
+
+.body {
+  font-size: 0.8rem;
+  color: var(--muted);
+  min-width: 0;
+}
+
+.act {
+  justify-self: end;
+}
+
+.mini {
+  font-family: var(--sans);
+  font-size: 0.64rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-weight: 600;
+  padding: 6px 10px;
+  border: 1px solid var(--rule-ink);
+  color: var(--green);
+  white-space: nowrap;
+}
+
+.pri {
+  display: inline-grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  background: var(--go);
+  color: #f4f1e4;
+  font-family: var(--type);
+  font-size: 0.82rem;
+}
+
+.booked {
+  box-shadow: inset 3px 0 0 var(--blue);
+}
+
+.booked .t {
+  color: var(--muted);
+}
+
+.unavail {
+  box-shadow: inset 3px 0 0 var(--rule-2);
+}
+
+.unavail .t {
+  color: var(--muted);
+}
+
+.sel {
+  background: var(--go-soft) !important;
+  box-shadow: inset 3px 0 0 var(--go);
+}
+
+.sel .body {
+  color: var(--go);
+  font-weight: 600;
+}
+
+.panel {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.panelH {
+  margin: 0;
+  font-family: var(--sans);
+  font-size: 0.66rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.picklist {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pl {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--type);
+  font-size: 0.9rem;
+}
+
+.pn {
+  width: 21px;
+  height: 21px;
+  background: var(--go);
+  color: #f4f1e4;
+  display: grid;
+  place-items: center;
+  font-size: 0.72rem;
+  flex: none;
+}
+
+.plX {
+  margin-left: auto;
+  color: var(--faint);
+  cursor: pointer;
+  background: none;
+  border: none;
+  font-family: var(--sans);
+  font-size: 0.9rem;
+}
+
+.note {
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+.note b {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.divide {
+  height: 1px;
+  background: var(--rule-2);
+}
+
+.pair {
+  display: flex;
+  gap: 12px;
+}
+
+@media (max-width: 780px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+  .ledgerWrap {
+    border-right: none;
+    border-bottom: 1px solid var(--rule-2);
+  }
+}
