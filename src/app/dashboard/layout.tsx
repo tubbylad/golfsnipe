@@ -34,9 +34,8 @@ export default async function DashboardLayout({ children }: { children: React.Re
         <div className={styles.grow} />
         <div className={styles.foot}>
           <span className={styles.ava}>{initials}</span>
-          <div className={styles.footName}>
-            {user.name}
-            <br />
+          <div className={styles.footMeta}>
+            <span className={styles.footNm}>{user.name}</span>
             <form action={logoutAction}>
               <button className={styles.logout} type="submit">
                 Log out

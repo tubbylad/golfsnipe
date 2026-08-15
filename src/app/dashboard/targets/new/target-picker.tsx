@@ -8,7 +8,7 @@ import p from './picker.module.css';
 const STATUS_LABEL: Record<TeeSheetSlot['status'], string> = {
   open: 'Open',
   booked: 'Booked',
-  unavailable: 'Not released yet',
+  unavailable: 'Unavailable',
 };
 
 /** Pick a date, load the real BRS tee sheet as a ledger, and tap the times you

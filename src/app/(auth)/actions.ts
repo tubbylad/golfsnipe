@@ -2,7 +2,6 @@
 
 import { redirect } from 'next/navigation';
 import { registerWithInvite } from '@/lib/invites';
-import { authenticate } from '@/lib/auth';
 import {
   createSession,
   setSessionCookie,
@@ -51,22 +50,6 @@ export async function signupAction(_prev: AuthState, formData: FormData): Promis
   }
 
   const sessionId = await createSession(result.user.id);
-  await setSessionCookie(sessionId);
-  redirect('/dashboard');
-}
-
-/** Login: check credentials, and on success start a session. Failure returns a
- * single generic message so we never reveal whether the email exists. */
-export async function loginAction(_prev: AuthState, formData: FormData): Promise<AuthState> {
-  const email = field(formData, 'email').trim();
-  const password = field(formData, 'password');
-
-  if (!email || !password) return { error: 'Enter your email and password.' };
-
-  const user = await authenticate(email, password);
-  if (!user) return { error: 'Invalid email or password.' };
-
-  const sessionId = await createSession(user.id);
   await setSessionCookie(sessionId);
   redirect('/dashboard');
 }

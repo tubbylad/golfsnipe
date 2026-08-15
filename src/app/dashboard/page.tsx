@@ -66,22 +66,22 @@ export default async function DashboardPage() {
         {accounts.length === 0 ? (
           <section className={styles.section}>
             <h2 className={styles.sectionTitle}>Get started</h2>
-            <p className={styles.empty}>
-              Connect the club you book through, then set the tee time you want each week.{' '}
-              <Link className={styles.back} href="/dashboard/accounts/new">
+            <div className={styles.emptyCta}>
+              <p>Connect the club you book through, then set the tee time you want each week.</p>
+              <Link className={styles.button} href="/dashboard/accounts/new">
                 Connect a club
               </Link>
-            </p>
+            </div>
           </section>
         ) : snipes.length === 0 ? (
           <section className={styles.section}>
             <h2 className={styles.sectionTitle}>Almost there</h2>
-            <p className={styles.empty}>
-              Your club is connected. Set up the tee time to snipe each week.{' '}
-              <Link className={styles.back} href="/dashboard/targets/new">
+            <div className={styles.emptyCta}>
+              <p>Your club is connected. Now set the tee time you want the bot to book each week.</p>
+              <Link className={styles.button} href="/dashboard/targets/new">
                 Set up your first snipe
               </Link>
-            </p>
+            </div>
           </section>
         ) : (
           <>

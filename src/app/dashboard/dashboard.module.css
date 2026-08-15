@@ -86,8 +86,10 @@
   flex: none;
 }
 
-.footName {
-  line-height: 1.3;
+.footMeta {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.35;
 }
 
 .logout {
@@ -276,6 +278,21 @@
   padding: 16px;
 }
 
+.emptyCta {
+  padding: 18px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.emptyCta p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.92rem;
+  max-width: 46ch;
+}
+
 .muted {
   color: var(--muted);
   font-size: 0.85rem;
@@ -307,6 +324,16 @@
   gap: 0.5rem;
   font-size: 0.9rem;
   padding: 0.2rem 0;
+}
+
+/* Bare hints / tab-rows placed directly in a (padding-less) .section get the
+ * same inset as the padded form/list content, so nothing sits flush to the edge. */
+.section > .hint {
+  margin: 12px 16px 0;
+}
+
+.section > .nav {
+  margin: 14px 16px 4px;
 }
 
 /* nav pill row (legacy pages) reworked to square tabs */
@@ -693,14 +720,46 @@
   .side {
     flex-direction: row;
     align-items: center;
+    gap: 8px;
     overflow-x: auto;
-    gap: 2px;
+    padding: 8px 12px;
     border-right: none;
     border-bottom: 1px solid var(--green-deep);
   }
-  .brand,
-  .grow,
+  .brand {
+    margin: 0;
+    padding: 0;
+    border: none;
+    flex: none;
+  }
+  .wm {
+    font-size: 0.82rem;
+  }
+  .navlist {
+    flex-direction: row;
+    gap: 0;
+    flex: none;
+  }
+  .sideLink,
+  .sideOn {
+    padding: 7px 10px;
+    white-space: nowrap;
+    font-size: 0.85rem;
+  }
+  .sideOn {
+    box-shadow: inset 0 -3px 0 var(--flag);
+  }
+  .grow {
+    display: none;
+  }
   .foot {
+    margin: 0 0 0 auto;
+    padding: 0;
+    border: none;
+    flex: none;
+  }
+  .ava,
+  .footNm {
     display: none;
   }
   .next,
