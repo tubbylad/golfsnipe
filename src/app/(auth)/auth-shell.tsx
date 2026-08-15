@@ -7,8 +7,9 @@ const GHOST_TIMES = `07:28   07:36   07:44   07:52   08:00   08:08
 07:52   08:00   08:08   08:16   08:24   08:32`;
 
 /**
- * The green branded "front door" shared by login / signup / password. Renders the
- * wordmark, an optional pitch, and a white card holding the page's form + links.
+ * The green branded "front door" shared by login / signup / password. On desktop
+ * the pitch sits beside the form card; on mobile they stack. Pages without a
+ * pitch (e.g. the admin password login) just centre the card.
  */
 export function AuthShell({
   title,
@@ -24,17 +25,18 @@ export function AuthShell({
       <div className={styles.ghost} aria-hidden>
         {GHOST_TIMES}
       </div>
-      <header className={styles.brand}>
-        <FlagMark variant="light" size={26} />
-        <span className={styles.wm}>GolfSnipe</span>
-      </header>
-      <div className={styles.stage}>
-        {pitch ? <p className={styles.pitch}>{pitch}</p> : null}
-        <div className={styles.card}>
-          <h1 className={styles.title}>{title}</h1>
-          {children}
+      <div className={styles.inner}>
+        <header className={styles.brand}>
+          <FlagMark variant="light" size={26} />
+          <span className={styles.wm}>GolfSnipe</span>
+        </header>
+        <div className={pitch ? styles.stage : styles.stageSolo}>
+          {pitch ? <p className={styles.pitch}>{pitch}</p> : null}
+          <div className={styles.card}>
+            <h1 className={styles.title}>{title}</h1>
+            {children}
+          </div>
         </div>
-        <p className={styles.foot}>CARNOUSTIE · DOWNFIELD · MONIFIETH · PANMURE</p>
       </div>
     </main>
   );

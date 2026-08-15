@@ -23,9 +23,6 @@ export default function LoginPage() {
       <p className={styles.subtitle}>
         New here? <Link href="/signup">Create an account</Link>
       </p>
-      <p className={styles.subtitle}>
-        <Link href="/login/password">Admin password login</Link>
-      </p>
     </AuthShell>
   );
 }

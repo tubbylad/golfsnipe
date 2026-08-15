@@ -1,5 +1,6 @@
 /* Branded green "front door" for login / signup / password, with a ghosted tee
- * sheet behind it. Square and ruled to match the app; no pills. */
+ * sheet behind it. On desktop the pitch and the form sit side by side (a centred
+ * lockup); on mobile they stack. Square and ruled to match the app; no pills. */
 .wrap {
   position: relative;
   min-height: 100dvh;
@@ -8,13 +9,14 @@
   overflow: hidden;
   padding: clamp(1.5rem, 5vw, 3rem);
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 }
 
 .ghost {
   position: absolute;
   inset: 0;
-  opacity: 0.09;
+  opacity: 0.08;
   font-family: var(--type);
   font-size: 0.82rem;
   line-height: 2.4;
@@ -22,15 +24,21 @@
   padding: 2rem 2.5rem;
   white-space: pre;
   pointer-events: none;
-  -webkit-mask-image: linear-gradient(115deg, transparent, #000 60%);
-  mask-image: linear-gradient(115deg, transparent, #000 60%);
+  -webkit-mask-image: linear-gradient(120deg, transparent, #000 55%, transparent);
+  mask-image: linear-gradient(120deg, transparent, #000 55%, transparent);
+}
+
+.inner {
+  position: relative;
+  width: 100%;
+  max-width: 60rem;
 }
 
 .brand {
-  position: relative;
   display: flex;
   align-items: center;
   gap: 0.7rem;
+  margin-bottom: clamp(2rem, 9vh, 5rem);
 }
 
 .wm {
@@ -43,19 +51,30 @@
 }
 
 .stage {
-  position: relative;
-  margin-block: auto;
-  padding-top: 2rem;
-  max-width: 31rem;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.75rem;
+  align-items: center;
+}
+
+.stageSolo {
+  display: flex;
+  justify-content: center;
+}
+
+@media (min-width: 860px) {
+  .stage {
+    grid-template-columns: minmax(0, 1fr) 22rem;
+    gap: 3rem;
+  }
 }
 
 .pitch {
   font-family: var(--serif);
-  font-size: clamp(1.5rem, 4vw, 2.1rem);
+  font-size: clamp(1.6rem, 3.4vw, 2.35rem);
   line-height: 1.16;
   font-weight: 600;
   letter-spacing: -0.01em;
-  margin-bottom: 1.4rem;
 }
 
 .pitch i {
@@ -67,8 +86,9 @@
   background: var(--surface);
   color: var(--ink);
   border: 1px solid var(--green-deep);
-  padding: 1.5rem;
-  max-width: 22rem;
+  padding: 1.6rem;
+  width: 100%;
+  max-width: 23rem;
 }
 
 .title {
@@ -149,19 +169,4 @@
   color: var(--flag);
   font-size: 0.82rem;
   font-weight: 600;
-}
-
-.foot {
-  position: relative;
-  margin-top: 1.3rem;
-  font-family: var(--type);
-  font-size: 0.72rem;
-  letter-spacing: 0.04em;
-  color: #74947f;
-}
-
-@media (max-width: 560px) {
-  .card {
-    max-width: none;
-  }
 }
