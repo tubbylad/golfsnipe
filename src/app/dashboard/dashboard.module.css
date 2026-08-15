@@ -413,7 +413,7 @@
 .tt {
   font-family: var(--type);
   font-size: 0.9rem;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--ink);
   padding: 3px 8px;
   border: 1px solid var(--rule-2);
@@ -722,7 +722,7 @@
 
 .metaRoster {
   font-size: 0.84rem;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--ink);
 }
 
@@ -961,5 +961,22 @@
   .qDate {
     justify-self: start;
     text-align: left;
+  }
+
+  /* Stack the snipe row on mobile: club + data, then controls on their own line
+     (was a cramped wrap with the controls wedged into the middle of the data). */
+  .snipeRow {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 11px;
+  }
+  .snipeMeta {
+    font-size: 0.88rem;
+  }
+  .snipeMeta .tt {
+    font-size: 0.95rem;
+  }
+  .snipeRight {
+    justify-content: flex-start;
   }
 }
