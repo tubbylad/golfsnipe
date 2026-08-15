@@ -62,6 +62,28 @@ function firstBookable(avail: unknown, minHour: number): { time: string; slot: S
   await s.login(account.username, password);
   log('logged in ✓');
 
+  // CLEANUP mode (safety net): just cancel a named slot on PDATE and verify it's
+  // freed. Used by the post-release safety timer to guarantee no booking lingers.
+  const cleanupTime = process.env.CLEANUP_TIME;
+  if (cleanupTime) {
+    log(`CLEANUP mode: ensuring ${DATE} ${cleanupTime} is not held`);
+    const before = await s.getSlot(account.courseId, DATE, cleanupTime);
+    if (before?.booked !== true) {
+      log(`nothing to clean — ${cleanupTime} booked=${before?.booked}`);
+    } else {
+      for (let i = 1; i <= 5; i++) {
+        const cancelled = await s.cancelBooking(account.courseId, DATE, cleanupTime);
+        const check = await s.getSlot(account.courseId, DATE, cleanupTime);
+        log(`cleanup attempt ${i}: cancelBooking->${cancelled}, booked=${check?.booked}`);
+        if (check?.booked === false) break;
+        await sleep(1000);
+      }
+    }
+    await s.logout();
+    await prisma.$disconnect();
+    return;
+  }
+
   // Wait for the release instant if the date isn't live yet. Keep the session warm
   // with a light poll every WAIT_TICK_MS (never one long sleep — a stale session at
   // release would blow the single shot), then arm the burst ARM_LEAD_MS before release.
@@ -117,13 +139,19 @@ function firstBookable(avail: unknown, minHour: number): { time: string; slot: S
   } else if (result.status === 'booked') {
     const seated = await s.getSlot(account.courseId, DATE, hit.time);
     log(`BOOKED ✓ seat holders: ${JSON.stringify(seated?.participants.map((p) => p.name))}`);
-    const cancelled = await s.cancelBooking(account.courseId, DATE, hit.time);
-    const freed = await s.getSlot(account.courseId, DATE, hit.time);
-    log(`cancelBooking -> ${cancelled}; slot now booked=${freed?.booked} bookable=${freed?.bookable}`);
+    // Cancel with retries — a real booking must never be left on the account.
+    let freed = false;
+    for (let i = 1; i <= 5 && !freed; i++) {
+      const cancelled = await s.cancelBooking(account.courseId, DATE, hit.time);
+      const check = await s.getSlot(account.courseId, DATE, hit.time);
+      freed = check?.booked === false;
+      log(`cancel attempt ${i}: cancelBooking->${cancelled}, slot booked=${check?.booked}`);
+      if (!freed) await sleep(1000);
+    }
     log(
-      cancelled && freed?.booked === false
+      freed
         ? 'PROOF COMPLETE ✅ — caught the release, booked, then cancelled clean'
-        : '⚠ VERIFY MANUALLY — cancel may not have freed the slot',
+        : `⚠⚠ COULD NOT CANCEL — MANUAL CLEANUP NEEDED for ${DATE} ${hit.time}`,
     );
   } else {
     log(`FAILED: ${result.status} — ${(result as { reason?: string }).reason}`);
