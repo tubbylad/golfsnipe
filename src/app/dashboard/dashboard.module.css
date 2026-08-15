@@ -367,11 +367,11 @@
 /* ================= tags / chips / seats (SQUARE) ================= */
 .tag {
   font-family: var(--sans);
-  font-size: 0.6rem;
-  letter-spacing: 0.14em;
+  font-size: 0.64rem;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
-  font-weight: 600;
-  padding: 3px 7px;
+  font-weight: 700;
+  padding: 3px 8px;
   border: 1px solid transparent;
   white-space: nowrap;
 }
@@ -386,8 +386,13 @@
   background: var(--amber-soft);
 }
 
-.tagPaused,
 .tagOnce {
+  color: var(--ink);
+  background: var(--surface-alt);
+  border-color: var(--rule-2);
+}
+
+.tagPaused {
   color: var(--muted);
   background: var(--surface-alt);
   border-color: var(--rule-2);
@@ -395,19 +400,21 @@
 
 .badge {
   font-family: var(--sans);
-  font-size: 0.62rem;
-  letter-spacing: 0.1em;
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   font-weight: 600;
-  padding: 4px 8px;
+  padding: 4px 9px;
   border: 1px solid var(--rule-2);
-  color: var(--muted);
+  color: var(--ink);
   white-space: nowrap;
 }
 
 .tt {
   font-family: var(--type);
-  font-size: 0.88rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--ink);
   padding: 3px 8px;
   border: 1px solid var(--rule-2);
   background: var(--surface);
@@ -535,7 +542,8 @@
 
 .count {
   font-family: var(--type);
-  font-size: 1.85rem;
+  font-size: 1.9rem;
+  font-weight: 700;
   letter-spacing: -0.01em;
   margin: 6px 0 3px;
   line-height: 1;
@@ -707,13 +715,15 @@
 
 .metaDate {
   font-family: var(--type);
-  font-size: 0.8rem;
-  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--ink);
 }
 
 .metaRoster {
-  font-size: 0.82rem;
-  color: var(--muted);
+  font-size: 0.84rem;
+  font-weight: 500;
+  color: var(--ink);
 }
 
 .snipeRight {
