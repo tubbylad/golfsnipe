@@ -21,6 +21,12 @@ const ICONS: Record<NavIcon, React.ReactNode> = {
       <path d="M4 10 H20 M8.5 3.5 V7 M15.5 3.5 V7" />
     </>
   ),
+  pin: (
+    <>
+      <path d="M12 21 s6.5-5.8 6.5-10.5 a6.5 6.5 0 0 0-13 0 C5.5 15.2 12 21 12 21 z" />
+      <circle cx="12" cy="10.5" r="2.4" />
+    </>
+  ),
 };
 
 /** Fixed bottom tab bar for mobile (thumb-reach nav, no scrolling, no hidden items). */

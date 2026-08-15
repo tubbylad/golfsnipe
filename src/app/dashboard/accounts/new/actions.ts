@@ -56,5 +56,5 @@ export async function addBrsAccountAction(_prev: AccountState, formData: FormDat
     username,
     password,
   });
-  redirect('/dashboard');
+  redirect('/dashboard/clubs');
 }

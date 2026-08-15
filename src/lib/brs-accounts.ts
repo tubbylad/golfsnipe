@@ -45,3 +45,13 @@ export async function listBrsAccounts(userId: string) {
     include: { targets: true },
   });
 }
+
+/**
+ * Delete one of a user's BRS accounts, and via `onDelete: Cascade` its targets
+ * and their weekly runs. Ownership is enforced in the where-clause (deleteMany
+ * is a no-op if the account is not the caller's), so a forged id can't delete
+ * another user's club.
+ */
+export async function deleteBrsAccount(userId: string, accountId: string): Promise<void> {
+  await prisma.brsAccount.deleteMany({ where: { id: accountId, userId } });
+}
