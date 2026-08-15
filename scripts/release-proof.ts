@@ -96,7 +96,12 @@ function firstBookable(avail: unknown, minHour: number): { time: string; slot: S
       try {
         await s.getAvailability(account.courseId, DATE); // keep-alive
       } catch (e) {
-        log(`keep-alive error: ${(e as Error).message}`);
+        log(`keep-alive error: ${(e as Error).message} — re-logging in`);
+        try {
+          await s.login(account.username, password);
+        } catch (e2) {
+          log(`re-login failed: ${(e2 as Error).message}`);
+        }
       }
       log(`waiting… ${Math.round((releaseAt - Date.now()) / 1000)}s to release`);
     }
@@ -116,6 +121,11 @@ function firstBookable(avail: unknown, minHour: number): { time: string; slot: S
       hit = firstBookable(avail, MIN_HOUR);
     } catch (e) {
       log(`poll ${polls} error: ${(e as Error).message}`);
+      try {
+        await s.login(account.username, password); // self-heal a dropped session
+      } catch {
+        /* keep polling; next attempt retries */
+      }
     }
     if (hit) {
       log(`slot ${hit.time} bookable after ${polls} polls ✓`);
