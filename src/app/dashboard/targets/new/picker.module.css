@@ -48,8 +48,44 @@
   background: var(--surface-alt);
 }
 
-.trow:hover:not(.sel) {
+.trow:not(.rowStatic):hover:not(.sel) {
   background: var(--go-soft);
+}
+
+.rowStatic {
+  cursor: default;
+}
+
+.rowStatic .t {
+  color: var(--muted);
+}
+
+.releaseBanner {
+  padding: 12px 16px;
+  background: var(--amber-soft);
+  color: var(--amber);
+  font-size: 0.85rem;
+  line-height: 1.5;
+  border-bottom: 1px solid var(--rule-2);
+}
+
+.releaseBanner b {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.liveBanner {
+  padding: 10px 16px;
+  background: var(--surface-alt);
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.5;
+  border-bottom: 1px solid var(--rule-2);
+}
+
+.liveBanner b {
+  color: var(--ink);
+  font-weight: 600;
 }
 
 .t {

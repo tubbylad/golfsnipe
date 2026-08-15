@@ -1,7 +1,12 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import { createTargetAction, fetchTeeSheetAction, type TeeSheetSlot } from '../actions';
+import {
+  createTargetAction,
+  fetchTeeSheetAction,
+  type SheetRelease,
+  type TeeSheetSlot,
+} from '../actions';
 import d from '../../dashboard.module.css';
 import p from './picker.module.css';
 
@@ -11,9 +16,29 @@ const STATUS_LABEL: Record<TeeSheetSlot['status'], string> = {
   unavailable: 'Unavailable',
 };
 
-/** Pick a date, load the real BRS tee sheet as a ledger, and tap the times you
- * want in priority order. Booked/unreleased times are pickable too, so the bot
- * can grab them the instant they open. */
+function formatRelease(iso: string): string {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return iso;
+  return date.toLocaleString('en-GB', {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
+/**
+ * Pick a date, load the real BRS tee sheet as a ledger, and tap the times you
+ * want in priority order.
+ *
+ * Two cases, kept distinct so the states don't read the same:
+ *  - the sheet has NOT opened yet (the normal snipe case): every time is
+ *    pickable, and a banner shows exactly when it opens. The bot grabs your
+ *    picks the instant it does.
+ *  - the sheet is already live: only Open times are pickable; Booked and
+ *    Unavailable (view-only) times are shown for context but can't be picked.
+ */
 export function TargetPicker({
   accounts,
 }: {
@@ -22,10 +47,12 @@ export function TargetPicker({
   const [accountId, setAccountId] = useState(accounts[0]?.id ?? '');
   const [date, setDate] = useState('');
   const [slots, setSlots] = useState<TeeSheetSlot[] | null>(null);
+  const [release, setRelease] = useState<SheetRelease | null>(null);
   const [picked, setPicked] = useState<string[]>([]);
   const [error, setError] = useState('');
   const [pending, start] = useTransition();
 
+  const notReleased = !!release;
   const weekday = date
     ? new Date(`${date}T00:00:00Z`).toLocaleDateString('en-GB', { weekday: 'long', timeZone: 'UTC' })
     : '';
@@ -33,11 +60,16 @@ export function TargetPicker({
   const load = () => {
     setError('');
     setSlots(null);
+    setRelease(null);
     setPicked([]);
     start(async () => {
       const res = await fetchTeeSheetAction(accountId, date);
-      if (res.ok) setSlots(res.slots);
-      else setError(res.error);
+      if (res.ok) {
+        setSlots(res.slots);
+        setRelease(res.release);
+      } else {
+        setError(res.error);
+      }
     });
   };
   const toggle = (t: string) =>
@@ -88,12 +120,52 @@ export function TargetPicker({
       {slots ? (
         <div className={p.grid}>
           <div className={p.ledgerWrap}>
+            {release ? (
+              <p className={p.releaseBanner}>
+                This sheet has not opened yet. It goes live <b>{formatRelease(release.time)}</b>. Pick
+                the times you want and the bot books the first available one the instant it opens.
+              </p>
+            ) : (
+              <p className={p.liveBanner}>
+                This sheet is already open, so these are live bookings. Only <b>Open</b> times can be
+                picked.
+              </p>
+            )}
             <div className={p.ledger}>
               {slots.map((s) => {
                 const idx = picked.indexOf(s.time);
                 const on = idx >= 0;
+                const pickable = notReleased || s.status === 'open';
                 const statusClass =
-                  s.status === 'booked' ? p.booked : s.status === 'unavailable' ? p.unavail : '';
+                  notReleased
+                    ? ''
+                    : s.status === 'booked'
+                      ? p.booked
+                      : s.status === 'unavailable'
+                        ? p.unavail
+                        : '';
+                const body = on ? (
+                  <span className={p.body}>Your #{idx + 1} pick</span>
+                ) : notReleased ? (
+                  <span className={p.body} />
+                ) : (
+                  <span className={p.body}>{STATUS_LABEL[s.status]}</span>
+                );
+                const act = on ? (
+                  <span className={p.pri}>{idx + 1}</span>
+                ) : pickable ? (
+                  <span className={p.mini}>+ Pick</span>
+                ) : null;
+
+                if (!pickable) {
+                  return (
+                    <div key={s.time} className={`${p.trow} ${p.rowStatic} ${statusClass}`}>
+                      <span className={p.t}>{s.time}</span>
+                      {body}
+                      <span className={p.act}>{act}</span>
+                    </div>
+                  );
+                }
                 return (
                   <button
                     key={s.time}
@@ -102,14 +174,8 @@ export function TargetPicker({
                     className={`${p.trow} ${statusClass} ${on ? p.sel : ''}`}
                   >
                     <span className={p.t}>{s.time}</span>
-                    <span className={p.body}>{on ? `Your #${idx + 1} pick` : STATUS_LABEL[s.status]}</span>
-                    <span className={p.act}>
-                      {on ? (
-                        <span className={p.pri}>{idx + 1}</span>
-                      ) : (
-                        <span className={p.mini}>+ Pick</span>
-                      )}
-                    </span>
+                    {body}
+                    <span className={p.act}>{act}</span>
                   </button>
                 );
               })}
@@ -121,8 +187,8 @@ export function TargetPicker({
               <h3 className={p.panelH}>Your picks</h3>
               {picked.length === 0 ? (
                 <p className={d.hint} style={{ marginTop: 8 }}>
-                  Tap times on the left, in order of preference. You can pick times shown as taken;
-                  the bot grabs them the instant they release.
+                  Tap the times on the left, in order of preference. The bot tries #1 first, then #2,
+                  and so on.
                 </p>
               ) : (
                 <div className={p.picklist} style={{ marginTop: 10 }}>

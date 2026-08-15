@@ -6,6 +6,7 @@ import { getCurrentUser } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { decryptSecret } from '@/lib/vault';
 import { BrsSession } from '@/brs/session';
+import { parseReleaseTime } from '@/brs/parse';
 
 /**
  * Server Actions for tee-time Targets. Each re-reads the session and re-checks
@@ -20,7 +21,11 @@ function field(formData: FormData, name: string): string {
 const HHMM = /^([01]\d|2[0-3]):[0-5]\d$/;
 
 export type TeeSheetSlot = { time: string; status: 'open' | 'booked' | 'unavailable' };
-export type TeeSheetResult = { ok: true; slots: TeeSheetSlot[] } | { ok: false; error: string };
+/** Present only when the whole sheet has not opened yet — the instant it goes live. */
+export type SheetRelease = { time: string; title: string };
+export type TeeSheetResult =
+  | { ok: true; slots: TeeSheetSlot[]; release: SheetRelease | null }
+  | { ok: false; error: string };
 
 /**
  * Live tee sheet for a date: logs into the chosen BRS account, reads the sheet,
@@ -38,6 +43,8 @@ export async function fetchTeeSheetAction(brsAccountId: string, isoDate: string)
   try {
     await session.login(account.username, password);
     const avail = await session.getAvailability(account.courseId, isoDate.replace(/-/g, '/'));
+    // If the whole sheet has not opened yet, BRS carries the release instant here.
+    const release = parseReleaseTime(avail as Parameters<typeof parseReleaseTime>[0]);
     const rawTimes = (avail as { times?: Record<string, unknown> }).times ?? {};
     const slots: TeeSheetSlot[] = [];
     for (const [time, v] of Object.entries(rawTimes)) {
@@ -45,7 +52,7 @@ export async function fetchTeeSheetAction(brsAccountId: string, isoDate: string)
       if (!tt) continue; // skip sunrise/sunset markers
       slots.push({ time, status: tt.bookable ? 'open' : tt.booked ? 'booked' : 'unavailable' });
     }
-    return { ok: true, slots };
+    return { ok: true, slots, release };
   } catch {
     return { ok: false, error: 'Could not read the tee sheet. Check the account login is correct.' };
   } finally {
@@ -84,7 +91,7 @@ export async function createTargetAction(formData: FormData): Promise<void> {
   await prisma.target.create({
     data: { brsAccountId: account.id, dayOfWeek, teeTimes, autoNext, holes, size },
   });
-  redirect('/dashboard/targets');
+  redirect('/dashboard');
 }
 
 /** Toggle a target's `active` flag (ownership-checked), then revalidate the views. */
