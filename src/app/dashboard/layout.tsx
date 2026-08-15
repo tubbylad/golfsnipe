@@ -2,13 +2,14 @@ import { redirect } from 'next/navigation';
 import { getCurrentUser } from '@/lib/auth';
 import { FlagMark } from '@/components/flag-mark';
 import { SidebarNav } from './sidebar-nav';
+import { BottomNav } from './bottom-nav';
 import { logoutAction } from '../(auth)/actions';
 import styles from './dashboard.module.css';
 
 /**
- * The /dashboard app shell: a green sidebar (brand + nav + logout) beside the
- * page canvas. Also the session guard, so every dashboard page can assume an
- * authenticated request.
+ * The /dashboard app shell. Desktop: a green sidebar beside the page canvas.
+ * Mobile: a slim top bar (brand + logout) plus a fixed bottom tab bar. Also the
+ * session guard, so every dashboard page can assume an authenticated request.
  */
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const user = await getCurrentUser();
@@ -44,7 +45,22 @@ export default async function DashboardLayout({ children }: { children: React.Re
           </div>
         </div>
       </nav>
+
+      <header className={styles.topbar}>
+        <div className={styles.tbBrand}>
+          <FlagMark variant="light" size={22} />
+          <span className={styles.wm}>GolfSnipe</span>
+        </div>
+        <form action={logoutAction}>
+          <button className={styles.tbLogout} type="submit">
+            Log out
+          </button>
+        </form>
+      </header>
+
       <div className={styles.canvas}>{children}</div>
+
+      <BottomNav />
     </div>
   );
 }
